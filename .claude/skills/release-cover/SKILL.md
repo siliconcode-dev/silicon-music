@@ -1,6 +1,6 @@
 ---
 name: release-cover
-description: Render the What's New / release-notes cover for a YTubic release from the app's REAL UI (settings dialog or any route), then grade it (ambient palette, soft depth of field, colour bloom, chromatic aberration, grain). Use when preparing a release cover, "обложка для релиза", or a hero image for whats-new.ts.
+description: Render the What's New / release-notes cover for a Silicon Music release from the app's REAL UI (settings dialog or any route), then grade it (ambient palette, soft depth of field, colour bloom, chromatic aberration, grain). Use when preparing a release cover, "обложка для релиза", or a hero image for whats-new.ts.
 ---
 
 # Release cover
@@ -53,7 +53,7 @@ Chrome is looked up at the usual install paths; `--chrome` overrides.
 - Add `image: "/whats-new/<version>.jpg"` to the release entry in
   `src/lib/whats-new.ts`.
 - The GitHub notes get the same picture at the top:
-  `![YTubic X.Y.Z](https://raw.githubusercontent.com/NUber-dev/YTubic/vX.Y.Z/public/whats-new/X.Y.Z.jpg)`
+  `![Silicon Music X.Y.Z](https://raw.githubusercontent.com/siliconcode-dev/silicon-music/vX.Y.Z/public/whats-new/X.Y.Z.jpg)`
   (the tag must include the image, so commit it before tagging).
 - Show the user the JPEG before wiring it in; they tune palette and blur by
   eye. What they rejected in 0.5.0: perspective tilt, bloom on white, strong

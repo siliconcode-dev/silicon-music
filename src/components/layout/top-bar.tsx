@@ -335,7 +335,8 @@ function ThemeSubMenu() {
   );
 }
 
-const REPO_ISSUES_URL = "https://github.com/NUber-dev/YTubic/issues/new";
+const REPO_ISSUES_URL =
+  "https://github.com/siliconcode-dev/silicon-music/issues/new";
 
 /**
  * Feedback form that hands off to GitHub: Submit opens a prefilled

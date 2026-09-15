@@ -25,7 +25,7 @@ export function ytubicShareUrl(kind: DeepLinkTarget["kind"], id: string): string
  * Music, so the link works for people without the app too. Songs get
  * their metadata from YouTube's oEmbed; other entities carry a title.
  */
-export const SHARE_BASE = "https://nuber-dev.github.io/YTubic/s/";
+export const SHARE_BASE = "https://siliconcode-dev.github.io/silicon-music/s/";
 
 export function universalShareUrl(
   kind: DeepLinkTarget["kind"],

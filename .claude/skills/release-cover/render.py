@@ -56,7 +56,7 @@ try:
     html.write_text(
         '<!doctype html>\n<html lang="en" class="dark">\n  <head>\n    <meta charset="UTF-8" />\n'
         '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n'
-        "    <title>YTubic cover</title>\n  </head>\n  <body>\n    <div id=\"root\"></div>\n"
+        "    <title>Silicon Music cover</title>\n  </head>\n  <body>\n    <div id=\"root\"></div>\n"
         '    <script type="module" src="/src/cover-entry.tsx"></script>\n  </body>\n</html>\n',
         encoding="utf-8",
     )
