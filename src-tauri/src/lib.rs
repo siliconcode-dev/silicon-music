@@ -29,6 +29,7 @@ mod discord;
 mod lastfm;
 mod media;
 mod power;
+mod spotify_auth;
 // Taskbar thumbnail toolbar (prev / play-pause / next under the taskbar
 // preview). See src/thumbbar.rs.
 mod thumbbar;
@@ -4023,6 +4024,7 @@ pub fn run() {
         .manage(SessionRenewal::default())
         .manage(discord::spawn())
         .manage(lastfm::LastfmState::default())
+        .manage(spotify_auth::SpotifyLoginState::default())
         .invoke_handler(tauri::generate_handler![
             ensure_ytdlp,
             resolve_stream_ytdlp,
@@ -4074,6 +4076,12 @@ pub fn run() {
             lastfm::lastfm_scrobble,
             lastfm::lastfm_love,
             lastfm::lastfm_flush,
+            spotify_auth::spotify_begin_login,
+            spotify_auth::spotify_await_login,
+            spotify_auth::spotify_list_accounts,
+            spotify_auth::spotify_switch_account,
+            spotify_auth::spotify_logout,
+            spotify_auth::spotify_get_access_token,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {

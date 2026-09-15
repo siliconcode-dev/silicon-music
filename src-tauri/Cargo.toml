@@ -45,7 +45,7 @@ tauri-plugin-store = "2"
 tauri-plugin-shell = "2"
 reqwest = { version = "0.12", default-features = false, features = ["native-tls"] }
 urlencoding = "2"
-tokio = { version = "1", features = ["rt-multi-thread", "io-util", "process", "sync", "net"] }
+tokio = { version = "1", features = ["rt-multi-thread", "io-util", "process", "sync", "net", "time"] }
 axum = "0.7"
 tower-http = { version = "0.6", features = ["cors", "fs"] }
 tower = "0.5"
@@ -68,6 +68,13 @@ discord-rich-presence = "0.2"
 # MD5 for Last.fm request signing (api_sig = md5 of sorted params + secret).
 # Tiny, single-purpose crate. See src/lastfm.rs.
 md5 = "0.7"
+# PKCE for Spotify OAuth (src/spotify_auth.rs): a CSPRNG for the code
+# verifier / CSRF state, SHA-256 for the S256 code challenge, and
+# base64url encoding for both. Standard, minimal, widely-audited crates
+# rather than hand-rolled crypto or raw BCrypt FFI.
+rand = "0.8"
+sha2 = "0.10"
+base64 = "0.22"
 
 # Windows is the only target now; these used to live under
 # [target.'cfg(windows)'.dependencies] but there is no other platform left
