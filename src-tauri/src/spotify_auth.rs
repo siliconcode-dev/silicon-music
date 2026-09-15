@@ -84,7 +84,7 @@ struct SpotifyAccountsIndex {
 /// What we hand back to the frontend.
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct SpotifyAccountSummary {
+pub struct SpotifyAccountSummary {
     id: String,
     display_name: String,
     email: String,
