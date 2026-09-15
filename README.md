@@ -23,7 +23,7 @@
 
 Built as a reaction to the sluggish webview-wrapper experience — Silicon Music talks to YouTube's InnerTube API directly, renders its own UI, and caches aggressively, so navigation and playback feel instant.
 
-![Silicon Music — artist page with the player and synced lyrics](assets/screenshots/artist-page.jpg)
+![Silicon Music — artist page with the player and synced lyrics](assets/screenshots/artist-page.png)
 
 ## Features
 
