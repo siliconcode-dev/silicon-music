@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { IconCheck, IconRefresh } from "@tabler/icons-react";
 import { IconMicrophoneFilled } from "@tabler/icons-react";
 import { playerIconButton } from "@/components/layout/player-chrome";
@@ -26,37 +26,14 @@ import {
 import { usePlaybackStore } from "@/lib/store/playback";
 import type { QueueTrack } from "@/lib/store/playback";
 import { useScrubStore } from "@/lib/store/scrub";
+import { useSettingsStore, type LyricsSourcePref } from "@/lib/store/settings";
 import { cn } from "@/lib/utils";
 
-const PREF_KEY = "ytm:lyrics-source";
-
-type Pref = LyricsSource | "auto";
+type Pref = LyricsSourcePref;
 /** "none" means the source answered and has nothing. "error" means it never
  *  answered. Keeping them apart is the whole point of the provider change:
  *  an unreachable source must stay selectable so the user can retry it. */
 type Availability = "lrc" | "plain" | "loading" | "none" | "error";
-
-function loadPref(): Pref {
-  try {
-    const v = localStorage.getItem(PREF_KEY);
-    if (v === "auto") return "auto";
-    // Checked against SOURCE_ORDER rather than a hardcoded list of names.
-    // The list version silently dropped any source added later: pinning
-    // one and restarting reverted you to "auto" with no explanation.
-    if (v && (SOURCE_ORDER as string[]).includes(v)) return v as Pref;
-  } catch {
-    /* noop */
-  }
-  return "auto";
-}
-
-function savePref(p: Pref) {
-  try {
-    localStorage.setItem(PREF_KEY, p);
-  } catch {
-    /* noop */
-  }
-}
 
 export type LyricsViewState = {
   active: Lyrics | null;
@@ -82,13 +59,21 @@ export type LyricsViewState = {
  * Used by the player bar to render `<LyricsBody>` (the flowing area)
  * and `<LyricsSourceButton>` (the mic-icon dropdown) from the same
  * state — without running the underlying queries twice.
+ *
+ * The preference itself lives in the shared settings store (persisted,
+ * cross-window) rather than local state, so Settings > Playback's
+ * "Lyrics Provider" row and this component's mic-icon dropdown always
+ * agree on the current pick.
  */
 export function useLyricsView(track: QueueTrack | undefined): LyricsViewState {
-  const [pref, setPrefState] = useState<Pref>(loadPref);
-  const setPref = (p: Pref) => {
-    setPrefState(p);
-    savePref(p);
-  };
+  const storedPref = useSettingsStore((s) => s.lyricsSource);
+  const setPref = useSettingsStore((s) => s.setLyricsSource);
+  // Guards a persisted value that no longer names a real source (e.g. a
+  // provider removed in a later version) rather than crashing the lookup.
+  const pref: Pref =
+    storedPref === "auto" || (SOURCE_ORDER as string[]).includes(storedPref)
+      ? storedPref
+      : "auto";
 
   const { queries, best, isLoading, failed, isRetrying, retryFailed } =
     useLyricsSources(track, !!track);

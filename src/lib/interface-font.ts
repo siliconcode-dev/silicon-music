@@ -2,6 +2,10 @@ import "@fontsource-variable/inter";
 import "@fontsource-variable/roboto";
 import "@fontsource-variable/ibm-plex-sans";
 import "@fontsource-variable/google-sans-flex";
+import "@fontsource/instrument-serif";
+import "@fontsource-variable/bricolage-grotesque";
+import "@fontsource-variable/playfair";
+import "@fontsource-variable/playfair-display";
 import { useSettingsStore, type InterfaceFont } from "@/lib/store/settings";
 
 /**
@@ -42,6 +46,26 @@ export const INTERFACE_FONTS: {
     id: "plex",
     label: "IBM Plex Sans",
     stack: "'IBM Plex Sans Variable', system-ui, sans-serif",
+  },
+  {
+    id: "bricolageGrotesque",
+    label: "Bricolage Grotesque",
+    stack: "'Bricolage Grotesque Variable', system-ui, sans-serif",
+  },
+  {
+    id: "instrumentSerif",
+    label: "Instrument Serif",
+    stack: "'Instrument Serif', Georgia, serif",
+  },
+  {
+    id: "playfair",
+    label: "Playfair",
+    stack: "'Playfair Variable', Georgia, serif",
+  },
+  {
+    id: "playfairDisplay",
+    label: "Playfair Display",
+    stack: "'Playfair Display Variable', Georgia, serif",
   },
   { id: "system", label: "System default", stack: SYSTEM_FONT_STACK },
 ];

@@ -6,6 +6,7 @@ import {
   IconCircleFilled,
   IconDeviceSpeakerFilled,
   IconHeadphonesFilled,
+  IconMicrophoneFilled,
   IconPlayerPlayFilled,
   IconTransitionRightFilled,
 } from "@tabler/icons-react";
@@ -27,6 +28,8 @@ import {
   type BackButtonMode,
   type EqPreset,
 } from "@/lib/store/playback-settings";
+import { useSettingsStore } from "@/lib/store/settings";
+import { SOURCE_LABELS, SOURCE_ORDER } from "@/lib/lyrics/sources";
 import { canSelectOutputDevice } from "@/lib/audio-graph";
 import { cn } from "@/lib/utils";
 
@@ -52,7 +55,62 @@ export function PlaybackTab() {
       <Group>
         <ResumeRow />
       </Group>
+      <Group>
+        <LyricsProviderRow />
+      </Group>
     </TabPane>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Lyrics provider                                                     */
+/* ------------------------------------------------------------------ */
+
+/** "Hybrid" is the existing auto-pick behavior (any timed source over any
+ *  plain source, in `SOURCE_ORDER`) — this row and the player bar's
+ *  mic-icon dropdown share the same preference in the settings store. */
+function LyricsProviderRow() {
+  const pref = useSettingsStore((s) => s.lyricsSource);
+  const setPref = useSettingsStore((s) => s.setLyricsSource);
+  const label = pref === "auto" ? "Hybrid" : SOURCE_LABELS[pref];
+
+  return (
+    <SettingRow
+      icon={IconMicrophoneFilled}
+      title="Lyrics Provider"
+      description="Hybrid tries every source and picks the best match; pin one to always use it."
+      control={
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="flex h-8 w-[196px] cursor-pointer items-center gap-2 rounded-[10px] border border-w090 bg-w040 px-3 text-[13px] text-t2 transition-colors duration-[140ms] hover:bg-w070 data-[state=open]:border-w200"
+            >
+              <span className="min-w-0 flex-1 truncate text-left">
+                {label}
+              </span>
+              <IconChevronDown className="size-3 shrink-0 text-t6" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-[196px]">
+            <DropdownMenuItem onSelect={() => setPref("auto")}>
+              <span className="flex-1 truncate">Hybrid</span>
+              {pref === "auto" ? (
+                <IconCheck className="size-4 text-acc1!" stroke={2.4} />
+              ) : null}
+            </DropdownMenuItem>
+            {SOURCE_ORDER.map((s) => (
+              <DropdownMenuItem key={s} onSelect={() => setPref(s)}>
+                <span className="flex-1 truncate">{SOURCE_LABELS[s]}</span>
+                {pref === s ? (
+                  <IconCheck className="size-4 text-acc1!" stroke={2.4} />
+                ) : null}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      }
+    />
   );
 }
 

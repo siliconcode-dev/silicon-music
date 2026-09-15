@@ -2,17 +2,32 @@ import { useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { LyricsSource } from "@/lib/lyrics/sources";
 
 export type CloseButtonAction = "tray" | "quit";
 export type CacheAutoCleanPeriod = "off" | "daily" | "weekly" | "monthly";
 export type BackgroundMode = "ambient" | "plain";
 /** Typeface for the whole UI. Stacks live in `lib/interface-font.ts`. */
-export type InterfaceFont = "system" | "gsans" | "inter" | "roboto" | "plex";
+export type InterfaceFont =
+  | "system"
+  | "gsans"
+  | "inter"
+  | "roboto"
+  | "plex"
+  | "instrumentSerif"
+  | "bricolageGrotesque"
+  | "playfair"
+  | "playfairDisplay";
 /** One heart, or a thumbs-up / thumbs-down pair. */
 export type RatingButtons = "heart" | "both";
 /** How the full-screen now-playing view fills the window
  *  (see `components/layout/fullscreen-player.tsx`). */
 export type FullscreenLayout = "cover" | "lyrics" | "immersive";
+/** Which lyrics provider to use: a specific source, or "auto" to pick the
+ *  best available per `lib/lyrics/sources.ts`'s SOURCE_ORDER (labeled
+ *  "Hybrid" in Settings). Shared between Settings > Playback and the
+ *  player bar's mic-icon dropdown so both stay in sync. */
+export type LyricsSourcePref = LyricsSource | "auto";
 
 type State = {
   /** What the title-bar ✕ does: hide to tray (default) or quit. */
@@ -33,6 +48,9 @@ type State = {
   /** Body of the full-screen player: cover centred, cover with the
    *  lyrics beside it, or the art itself behind the title. */
   fullscreenLayout: FullscreenLayout;
+  /** Preferred lyrics provider, or "auto" ("Hybrid") to pick the best
+   *  available source per track (see `lib/lyrics/sources.ts`). */
+  lyricsSource: LyricsSourcePref;
   /** System toast on track change while the app is in the background
    *  (see `lib/playback-notifications.ts`). */
   playbackNotifications: boolean;
@@ -65,6 +83,7 @@ type State = {
   setInterfaceFont: (v: InterfaceFont) => void;
   setRatingButtons: (v: RatingButtons) => void;
   setFullscreenLayout: (v: FullscreenLayout) => void;
+  setLyricsSource: (v: LyricsSourcePref) => void;
   setPlaybackNotifications: (v: boolean) => void;
   setDiscordRichPresence: (v: boolean) => void;
   setLastfmEnabled: (v: boolean) => void;
@@ -89,9 +108,10 @@ export const useSettingsStore = create<State>()(
       cacheAutoClean: "off",
       lastCacheCleanAt: 0,
       background: "ambient",
-      interfaceFont: "system",
+      interfaceFont: "bricolageGrotesque",
       ratingButtons: "heart",
       fullscreenLayout: "cover",
+      lyricsSource: "auto",
       playbackNotifications: false,
       discordRichPresence: false,
       lastfmEnabled: false,
@@ -106,6 +126,7 @@ export const useSettingsStore = create<State>()(
       setInterfaceFont: (interfaceFont) => set({ interfaceFont }),
       setRatingButtons: (ratingButtons) => set({ ratingButtons }),
       setFullscreenLayout: (fullscreenLayout) => set({ fullscreenLayout }),
+      setLyricsSource: (lyricsSource) => set({ lyricsSource }),
       setPlaybackNotifications: (playbackNotifications) =>
         set({ playbackNotifications }),
       setDiscordRichPresence: (discordRichPresence) =>
