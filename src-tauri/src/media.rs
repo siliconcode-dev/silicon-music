@@ -1,20 +1,6 @@
-// OS media controls via `souvlaki`: on Windows this is the System Media
-// Transport Controls (SMTC) — the media tile in the Quick Settings / volume
-// flyout, the lock screen, and the hardware media keys. Linux maps to MPRIS.
-//
-// macOS deliberately does NOT go through this module. WKWebView publishes its
-// own Now Playing session as soon as an <audio> element plays, and that session
-// outranks anything we register on MPRemoteCommandCenter ourselves: WebKit
-// handles the keys internally before our commands see them. Play/pause appears
-// to work (WebKit pauses the element directly) but next/previous are dead,
-// because a bare <audio> element gives its session no such commands. Unlike
-// WebView2's `--disable-features=MediaSessionService`, WKWebView exposes no
-// switch to suppress it. So on macOS we drive that session instead of fighting
-// it — `navigator.mediaSession` supplies both the metadata and the missing
-// next/previous/seek handlers; see the IS_MAC branches in
-// src/lib/audio-engine.ts. The tile still attributes to YTubic because
-// WKWebView's media session belongs to the host process, which is exactly the
-// attribution problem Windows has and macOS doesn't.
+// OS media controls via `souvlaki`: the System Media Transport Controls
+// (SMTC) — the media tile in the Quick Settings / volume flyout, the lock
+// screen, and the hardware media keys.
 //
 // Why we drive this from Rust instead of the webview's `navigator.mediaSession`:
 // the audio plays in an `<audio>` element inside WebView2, so Chromium creates
@@ -23,13 +9,13 @@
 // "Unknown app" with no icon. There is no supported API to re-attribute a
 // WebView2 media session to the host app (WebView2Feedback #2236, open since
 // 2022). Creating the SMTC ourselves, bound to the host process's main window,
-// makes Windows resolve the tile to YTubic's own executable identity (name +
-// icon). Chromium's competing "Unknown app" tile is suppressed by disabling its
-// media session via `--disable-features=...MediaSessionService` on the main
-// window (see `additionalBrowserArgs` in tauri.conf.json).
+// makes Windows resolve the tile to Silicon Music's own executable identity
+// (name + icon). Chromium's competing "Unknown app" tile is suppressed by
+// disabling its media session via `--disable-features=...MediaSessionService`
+// on the main window (see `additionalBrowserArgs` in tauri.conf.json).
 //
-// souvlaki's `MediaControls` is COM-backed on Windows: it is neither `Send` nor
-// `Sync`, and its calls must run on the thread that owns the window (the main
+// souvlaki's `MediaControls` is COM-backed: it is neither `Send` nor `Sync`,
+// and its calls must run on the thread that owns the window (the main
 // thread). So we keep it in a main-thread thread-local and only ever touch it
 // from the main thread — the commands below marshal on via
 // `AppHandle::run_on_main_thread`.
@@ -37,10 +23,9 @@ use std::cell::RefCell;
 use std::time::Duration;
 
 use serde::Deserialize;
-use souvlaki::{MediaControls, MediaMetadata, MediaPlayback, MediaPosition};
-#[cfg(not(target_os = "macos"))]
-use souvlaki::{MediaControlEvent, PlatformConfig};
-#[cfg(not(target_os = "macos"))]
+use souvlaki::{
+    MediaControlEvent, MediaControls, MediaMetadata, MediaPlayback, MediaPosition, PlatformConfig,
+};
 use tauri::Emitter;
 use tauri::{AppHandle, Manager};
 
@@ -57,66 +42,53 @@ thread_local! {
 /// Create the OS media controls and forward button presses to the frontend as
 /// a `media-control` event. MUST be called on the main thread (from `setup()`),
 /// where souvlaki requires to run and the main window's HWND is available.
-///
-/// No-op on macOS (see the module comment): leaving `CONTROLS` empty makes the
-/// souvlaki half of `apply` / `clear` below a no-op too, so the frontend owns
-/// the Now Playing session outright with no second one competing for the keys.
 pub fn init(app: &AppHandle) {
-    #[cfg(target_os = "macos")]
-    let _ = app;
+    let hwnd: Option<*mut std::ffi::c_void> = app
+        .get_webview_window("main")
+        .and_then(|w| w.hwnd().ok())
+        .map(|h| h.0 as *mut std::ffi::c_void);
 
-    #[cfg(not(target_os = "macos"))]
-    {
-        #[cfg(target_os = "windows")]
-        let hwnd: Option<*mut std::ffi::c_void> = app
-            .get_webview_window("main")
-            .and_then(|w| w.hwnd().ok())
-            .map(|h| h.0 as *mut std::ffi::c_void);
-        #[cfg(not(target_os = "windows"))]
-        let hwnd: Option<*mut std::ffi::c_void> = None;
+    let config = PlatformConfig {
+        dbus_name: "silicon-music",
+        display_name: "Silicon Music",
+        hwnd,
+    };
 
-        let config = PlatformConfig {
-            dbus_name: "ytubic",
-            display_name: "YTubic",
-            hwnd,
-        };
-
-        let mut controls = match MediaControls::new(config) {
-            Ok(c) => c,
-            Err(e) => {
-                eprintln!("[media] failed to create OS media controls: {e:?}");
-                return;
-            }
-        };
-
-        let app_handle = app.clone();
-        let attached = controls.attach(move |event: MediaControlEvent| {
-            let emit = |action: &str| {
-                let _ = app_handle.emit("media-control", serde_json::json!({ "action": action }));
-            };
-            match event {
-                MediaControlEvent::Play => emit("play"),
-                MediaControlEvent::Pause => emit("pause"),
-                MediaControlEvent::Toggle => emit("toggle"),
-                MediaControlEvent::Next => emit("next"),
-                MediaControlEvent::Previous => emit("previous"),
-                MediaControlEvent::Stop => emit("stop"),
-                MediaControlEvent::SetPosition(MediaPosition(d)) => {
-                    let _ = app_handle.emit(
-                        "media-control",
-                        serde_json::json!({ "action": "seek", "position": d.as_secs_f64() }),
-                    );
-                }
-                _ => {}
-            }
-        });
-        if let Err(e) = attached {
-            eprintln!("[media] failed to attach media controls: {e:?}");
+    let mut controls = match MediaControls::new(config) {
+        Ok(c) => c,
+        Err(e) => {
+            eprintln!("[media] failed to create OS media controls: {e:?}");
             return;
         }
+    };
 
-        CONTROLS.with(|c| *c.borrow_mut() = Some(controls));
+    let app_handle = app.clone();
+    let attached = controls.attach(move |event: MediaControlEvent| {
+        let emit = |action: &str| {
+            let _ = app_handle.emit("media-control", serde_json::json!({ "action": action }));
+        };
+        match event {
+            MediaControlEvent::Play => emit("play"),
+            MediaControlEvent::Pause => emit("pause"),
+            MediaControlEvent::Toggle => emit("toggle"),
+            MediaControlEvent::Next => emit("next"),
+            MediaControlEvent::Previous => emit("previous"),
+            MediaControlEvent::Stop => emit("stop"),
+            MediaControlEvent::SetPosition(MediaPosition(d)) => {
+                let _ = app_handle.emit(
+                    "media-control",
+                    serde_json::json!({ "action": "seek", "position": d.as_secs_f64() }),
+                );
+            }
+            _ => {}
+        }
+    });
+    if let Err(e) = attached {
+        eprintln!("[media] failed to attach media controls: {e:?}");
+        return;
     }
+
+    CONTROLS.with(|c| *c.borrow_mut() = Some(controls));
 }
 
 /// Everything the frontend pushes about the current track. Passed as one
@@ -202,21 +174,17 @@ fn apply(app: &AppHandle, now: NowPlaying) {
     });
     // Keep the taskbar thumbnail toolbar in sync. Cheap: it no-ops unless one
     // of the states actually changed.
-    #[cfg(windows)]
     crate::thumbbar::set_state(
         playing,
         shuffle,
         crate::thumbbar::Repeat::from_str(&repeat),
         liked,
     );
-    #[cfg(not(windows))]
-    let _ = (shuffle, repeat, liked);
 }
 
 fn clear(app: &AppHandle) {
     LAST_META.with(|m| *m.borrow_mut() = None);
-    set_window_title(app, "YTubic");
-    #[cfg(windows)]
+    set_window_title(app, "Silicon Music");
     crate::thumbbar::set_state(false, false, crate::thumbbar::Repeat::Off, false);
     CONTROLS.with(|cell| {
         if let Some(controls) = cell.borrow_mut().as_mut() {

@@ -1,6 +1,6 @@
 // Discord Rich Presence: shows the current track on the user's Discord
-// profile as "Listening to YTubic" with the cover art and a live progress
-// bar. Opt-in (Settings → General); off by default for privacy.
+// profile as "Listening to Silicon Music" with the cover art and a live
+// progress bar. Opt-in (Settings → General); off by default for privacy.
 //
 // Unlike the SMTC controls in `media.rs`, the Discord IPC client is a plain
 // socket/named-pipe with no COM/main-thread constraint, so we don't marshal
@@ -24,16 +24,16 @@ use discord_rich_presence::activity::{Activity, ActivityType, Assets, Timestamps
 use discord_rich_presence::{DiscordIpc, DiscordIpcClient};
 use tauri::State;
 
-// Discord Application ID. Create an application named "YTubic" at
-// https://discord.com/developers/applications — the name is exactly what
-// Discord renders after "Listening to". Then either set the env var at build
-// time (`YTUBIC_DISCORD_APP_ID=...`) or replace the "" default below with the
-// Application ID string. While this is empty the worker simply never connects,
-// so the feature is a no-op until a real ID is provided.
+// Discord Application ID. The default below still points at the Discord
+// Developer Portal application named "YTubic", left over from before the
+// rebrand — until that application is renamed to "Silicon Music" (or a new
+// one is created and its ID set via YTUBIC_DISCORD_APP_ID at build time),
+// Discord will keep rendering "Listening to YTubic" here. The name is
+// exactly what Discord renders after "Listening to".
 const APP_ID: &str = match option_env!("YTUBIC_DISCORD_APP_ID") {
     Some(id) => id,
-    // Public "YTubic" application ID (client IDs are not secret — they ship in
-    // every client that renders the presence). Overridable via the env var.
+    // Public application ID (client IDs are not secret — they ship in every
+    // client that renders the presence). Overridable via the env var.
     None => "1525085261418074152",
 };
 
@@ -121,14 +121,14 @@ fn push(client: &mut DiscordIpcClient, p: &Presence) -> Result<(), Box<dyn std::
         assets = assets
             .large_image(&p.image_url)
             .small_image(LOGO_URL)
-            .small_text("YTubic");
+            .small_text("Silicon Music");
         if !p.album.is_empty() {
             assets = assets.large_text(&p.album);
         }
     } else {
         // No cover art for this track — show the logo as the big image instead
         // so the presence never renders empty.
-        assets = assets.large_image(LOGO_URL).large_text("YTubic");
+        assets = assets.large_image(LOGO_URL).large_text("Silicon Music");
     }
 
     let mut activity = Activity::new()
@@ -146,7 +146,7 @@ fn push(client: &mut DiscordIpcClient, p: &Presence) -> Result<(), Box<dyn std::
 
 /// Discord's `status_display_type` for an activity: which field the member
 /// list and the status line show after "Listening to". 0 is the app name
-/// (the default, "Listening to YTubic"), 1 the state, 2 the details.
+/// (the default, "Listening to Silicon Music"), 1 the state, 2 the details.
 const STATUS_DISPLAY_DETAILS: u8 = 2;
 
 /// `set_activity`, with the song title shown where the app name would be.
@@ -278,7 +278,7 @@ fn worker(rx: Receiver<Msg>) {
 
         if let Some(c) = client.as_mut() {
             // Paused clears the card instead of leaving one that still reads
-            // "Listening to YTubic". Routed through the same dedup / rate-limit
+            // "Listening to Silicon Music". Routed through the same dedup / rate-limit
             // path as a normal push (rather than fired straight from the
             // message handler) so toggling play/pause can't burst past
             // Discord's limit, and so the re-assert tick keeps re-clearing a

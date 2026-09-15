@@ -1,10 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import {
-  fetchAccountInfo,
-  fetchPremiumStatus,
-  type AccountInfo,
-  type PremiumStatus,
-} from "@/lib/innertube/account";
+import { fetchAccountInfo, type AccountInfo } from "@/lib/innertube/account";
 
 /**
  * Retry / refetch policy shared by every query that decides whether the
@@ -52,19 +47,6 @@ export function accountInfoQuery(enabled: boolean) {
     queryFn: (): Promise<AccountInfo | null> => fetchAccountInfo(),
     enabled,
     staleTime: 5 * 60_000,
-    ...AUTH_RETRY,
-  };
-}
-
-/** Premium tier from the same endpoint, on a longer staleTime. */
-export function premiumStatusQuery(enabled: boolean) {
-  return {
-    queryKey: ["premium-status"] as const,
-    queryFn: (): Promise<PremiumStatus> => fetchPremiumStatus(),
-    enabled,
-    // Premium membership doesn't churn within a session; 30 min saves
-    // an extra account_menu hit on every settings visit.
-    staleTime: 30 * 60 * 1000,
     ...AUTH_RETRY,
   };
 }

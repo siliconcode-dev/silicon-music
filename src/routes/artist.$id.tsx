@@ -220,8 +220,8 @@ function ArtistActions({ artist }: { artist: ArtistPage }) {
           count={artist.subscribers}
         />
       ) : null}
-      {/* One link for everyone: the share page opens the artist in YTubic
-          when it's installed and falls back to YouTube Music when it isn't. */}
+      {/* One link for everyone: the share page opens the artist in Silicon
+          Music when it's installed and falls back to YouTube Music when it isn't. */}
       <Button
         variant="outline"
         size="icon"

@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="assets/branding/ytubic-icon.svg" alt="YTubic" width="96" />
+  <img src="assets/branding/silicon-music-icon.png" alt="Silicon Music" width="96" />
 </p>
 
-<h1 align="center">YTubic</h1>
+<h1 align="center">Silicon Music</h1>
 
 <p align="center">
-  A fast, responsive YouTube Music desktop client for Windows, Linux, and macOS.
+  A fast, responsive YouTube Music desktop client for Windows.
 </p>
 
 <p align="center">
@@ -14,16 +14,16 @@
 
 <p align="center">
   <a href="../../releases/latest">
-    <img src="https://img.shields.io/badge/%E2%AC%87%20Download%20YTubic-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="Download YTubic" height="60" />
+    <img src="https://img.shields.io/badge/%E2%AC%87%20Download%20Silicon%20Music-561FFA?style=for-the-badge&logo=windows&logoColor=white" alt="Download Silicon Music" height="60" />
   </a>
   <a href="https://discord.gg/4gccUpZyYH">
-    <img src="https://img.shields.io/badge/Join%20the%20Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Join the YTubic Discord" height="60" />
+    <img src="https://img.shields.io/badge/Join%20the%20Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Join the Silicon Music Discord" height="60" />
   </a>
 </p>
 
-Built as a reaction to the sluggish webview-wrapper experience — YTubic talks to YouTube's InnerTube API directly, renders its own UI, and caches aggressively, so navigation and playback feel instant.
+Built as a reaction to the sluggish webview-wrapper experience — Silicon Music talks to YouTube's InnerTube API directly, renders its own UI, and caches aggressively, so navigation and playback feel instant.
 
-![YTubic — artist page with the player and synced lyrics](assets/screenshots/artist-page.jpg)
+![Silicon Music — artist page with the player and synced lyrics](assets/screenshots/artist-page.jpg)
 
 ## Features
 
@@ -33,12 +33,12 @@ Built as a reaction to the sluggish webview-wrapper experience — YTubic talks 
 - **Synced lyrics** — line-by-line synced lyrics from multiple providers (LRCLIB, Musixmatch, Genius)
 - **Hi-res cover art** — upgrades album covers to high-resolution studio art when available
 - **Full library support** — your playlists, likes, albums and artists; search with filters; radio/autoplay queues
-- **Desktop integration** — media keys and system media controls, tray/menu-bar icon, single instance
+- **Desktop integration** — media keys and system media controls, tray icon, single instance
 - **Auto-updates** — the app updates itself from GitHub Releases, and keeps its yt-dlp copy fresh automatically
 
-> **Disclaimer:** YTubic is an unofficial client. It is not affiliated with,
-> endorsed by, or sponsored by Google or YouTube. "YouTube" and "YouTube Music"
-> are trademarks of Google LLC. The app streams audio through
+> **Disclaimer:** Silicon Music is an unofficial client. It is not affiliated
+> with, endorsed by, or sponsored by Google or YouTube. "YouTube" and
+> "YouTube Music" are trademarks of Google LLC. The app streams audio through
 > [yt-dlp](https://github.com/yt-dlp/yt-dlp) and may stop working at any time if
 > YouTube changes its internals. Use at your own risk.
 
@@ -48,23 +48,10 @@ Download the latest installer from the [Releases](../../releases) page and run i
 
 - **Windows 10/11:** run the `.exe` NSIS installer. Pick the `x64` build, or
   the `arm64` one on a Windows on ARM device.
-- **macOS 10.15+ (beta):** open the universal `.dmg`; the same build supports
-  Apple Silicon and Intel. Login cookies are encrypted with a Keychain-backed
-  key.
-- **Linux (beta):** install the `.deb` or `.rpm`, or run the `.AppImage`.
-  Playback requires WebKitGTK 4.1, GTK 3 and the GStreamer base, good and
-  libav plugins. Signing in also requires a desktop Secret Service provider
-  such as GNOME Keyring or a compatible KWallet setup.
 - On first launch the app downloads its own copy of yt-dlp (~12 MB) into its
   data folder and keeps it updated automatically.
 - Signing in is optional: browse and playback work anonymously; sign in to get
   your library, likes, and playlists.
-
-> **Linux and macOS builds are in beta.** They are compiled and unit-tested in
-> CI, but get far less real-world testing than the Windows build. If something
-> breaks, please [open an issue](../../issues) — or use the in-app reporter
-> (⋯ menu → Report an issue), which attaches your app version and OS
-> automatically.
 
 ### FAQ
 
@@ -72,16 +59,6 @@ Download the latest installer from the [Releases](../../releases) page and run i
 The installer is not code-signed (certificates are expensive for a free
 open-source project). Click "More info" → "Run anyway". The source code is
 public — you can audit it or build it yourself.
-
-**macOS says YTubic can't be opened or is from an unidentified developer.**
-Release builds are ad-hoc signed until Developer ID credentials are configured,
-so they are not notarized. Open **System Settings → Privacy & Security** and
-choose **Open Anyway**, or right-click YTubic in Applications and choose
-**Open**. As a last resort, clear the downloaded quarantine attribute:
-
-```bash
-xattr -cr /Applications/YTubic.app
-```
 
 **My antivirus flags the app / yt-dlp.**
 yt-dlp is a widely-used open-source downloader that some AV vendors
@@ -101,12 +78,11 @@ yt-dlp copy every ~3 days). Restarting the app forces the check.
 
 ## Stack
 
-- **Shell:** Tauri 2 (Rust backend, system webview — WebView2 on Windows,
-  WebKitGTK on Linux, WKWebView on macOS)
+- **Shell:** Tauri 2 (Rust backend, WebView2)
 - **Frontend:** React 19 + TypeScript
 - **Build:** Vite 7
 - **Styling:** Tailwind CSS v4
-- **Components:** shadcn/ui (new-york style, neutral base, YouTube red accent)
+- **Components:** shadcn/ui (new-york style, neutral base)
 - **Routing:** TanStack Router (file-based, type-safe, prefetch on intent)
 - **Data:** TanStack Query
 - **Client state:** Zustand
@@ -131,7 +107,7 @@ pnpm build        # tsc + vite production build
 ```
 
 CI (`.github/workflows/ci.yml`) runs typecheck, lint, tests, build and Rust
-tests on Windows, Linux, and macOS for every push / PR.
+tests on Windows for every push / PR.
 
 ## Project layout
 

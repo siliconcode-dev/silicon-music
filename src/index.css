@@ -9,9 +9,9 @@
      instead of overlapping the window-control buttons. */
   --titlebar-h: 36px;
 
-  /* YouTube brand red. Same value as the design system's --acc1. */
-  --brand: #fa1f4b;
-  --brand-rgb: 250, 31, 75;
+  /* Silicon Music brand indigo. Same value as the design system's --acc1. */
+  --brand: #561ffa;
+  --brand-rgb: 86, 31, 250;
   --brand-foreground: oklch(0.985 0 0);
 
   --background: oklch(1 0 0);
@@ -92,7 +92,7 @@
        --glass1 ... --glass6 translucent surfaces; always pair with
                         backdrop-filter: blur(22px) saturate(1.4)
                         (blur(18px) on larger panels)
-       --acc1 ... --acc5     accent ramp, all one hue (~348deg). --acc1
+       --acc1 ... --acc5     accent ramp, all one hue (~255deg). --acc1
                         does NOT flip between themes; only --acc2...5
                         darken in light mode
        --desk1 ... --desk3   desktop backdrop behind the window
@@ -104,12 +104,12 @@
 
      Components move onto these one at a time; until a component is
      migrated it keeps using the semantic tokens above. ---------------- */
-  --acc1: #fa1f4b;
-  --acc1rgb: 250, 31, 75;
-  --acc2: #d61239;
-  --acc3: #c71236;
-  --acc4: #b01030;
-  --acc5: #e1123b;
+  --acc1: #561ffa;
+  --acc1rgb: 86, 31, 250;
+  --acc2: #4312d6;
+  --acc3: #3f12c7;
+  --acc4: #3810b0;
+  --acc5: #4612e1;
 
   --t1: #18181b;
   --t2: #27272a;
@@ -271,10 +271,10 @@
   /* Dark half of the design-system palette; see the block in :root for
      what the names mean. --acc1 deliberately does not flip -- the accent
      stays vivid in both themes. */
-  --acc2: #ff5e7e;
-  --acc3: #ff8aa1;
-  --acc4: #ffb3c2;
-  --acc5: #fd4b6f;
+  --acc2: #865eff;
+  --acc3: #a78aff;
+  --acc4: #c6b3ff;
+  --acc5: #774bfd;
 
   --t1: #f5f4f2;
   --t2: #ededef;

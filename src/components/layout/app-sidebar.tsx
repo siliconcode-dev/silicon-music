@@ -48,7 +48,6 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   ContextMenu,
@@ -69,7 +68,6 @@ import {
   usePinned,
   usePinnedPlaylistsStore,
 } from "@/lib/store/pinned-playlists";
-import { IS_BETA_PLATFORM } from "@/lib/platform";
 import { openChannelPicker } from "@/lib/store/channel-picker";
 import { openSettings } from "@/lib/store/settings-dialog";
 import { UpdateBanner } from "@/components/layout/update-banner";
@@ -79,7 +77,6 @@ import type { ShelfItem } from "@/lib/innertube/types";
 import { pickThumbnail } from "@/components/shared/thumbnail";
 import { resetInnertube } from "@/lib/innertube/client";
 import { accountSlot } from "@/lib/auth-presence";
-import { usePremiumStore } from "@/lib/store/premium";
 import { accountInfoQuery, authLoggedInQuery } from "@/lib/store/auth-queries";
 import { useSessionStatusStore } from "@/lib/store/session-status";
 import {
@@ -152,25 +149,16 @@ export function AppSidebar() {
          *  rail's own axis (14 + 14 = 28), so it glides there instead of
          *  hopping to a centered row. */}
         <img
-          src="/ytubic-icon.svg"
-          alt="YTubic"
+          src="/silicon-music-icon.png"
+          alt="Silicon Music"
           className="size-7 shrink-0 rounded-full"
         />
         <span
           data-sidebar-label
           className="shrink-0 text-[17px] font-semibold leading-none tracking-[-0.015em] text-t1"
         >
-          YTubic
+          Silicon Music
         </span>
-        {IS_BETA_PLATFORM && (
-          <span
-            data-sidebar-label
-            title="The build for this OS is in beta — report anything broken via ⋯ → Report an issue."
-            className="shrink-0 rounded-[4px] border border-border/60 bg-muted/40 px-1 pb-px pt-0.5 text-[10px] font-semibold uppercase leading-none tracking-wider text-muted-foreground"
-          >
-            Beta
-          </span>
-        )}
       </SidebarHeader>
 
       {/* The content column itself doesn't scroll: Browse stays pinned
@@ -535,7 +523,6 @@ function UserProfile() {
   const loggedIn = useQuery(authLoggedInQuery);
   const account = useQuery(accountInfoQuery(loggedIn.data === true));
   const accounts = useAccounts();
-  const premiumStatus = usePremiumStore((s) => s.status);
   const expiredAccountId = useSessionStatusStore((s) => s.expiredAccountId);
 
   const allAccounts = accounts.data ?? [];
@@ -579,8 +566,6 @@ function UserProfile() {
     activeAccount?.photoUrl ??
     undefined;
   const initial = (name || email || "?").trim().charAt(0).toUpperCase();
-  const isPremium = premiumStatus === "premium";
-  const tierLabel = isPremium ? "Premium" : "Free";
 
   const signOut = async () => {
     if (!activeAccount) {
@@ -651,24 +636,7 @@ function UserProfile() {
                 </AvatarFallback>
               </Avatar>
               <span className="truncate">{name}</span>
-              {/* The tier badge is a claim about the live session; with
-                  only stored meta (dead session fallback) it would say
-                  "Free" about an account we can't actually see. */}
-              {live ? (
-                <Badge
-                  data-sidebar-label
-                  variant="outline"
-                  className={cn(
-                    "ms-auto h-4 px-1.5 text-[10px] font-semibold uppercase tracking-wide",
-                    "group-data-[collapsible=icon]:hidden",
-                    isPremium
-                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                      : "text-muted-foreground",
-                  )}
-                >
-                  {tierLabel}
-                </Badge>
-              ) : account.isLoading ? (
+              {!live && account.isLoading ? (
                 // First look at the session, typically the few seconds
                 // at launch while the keeper renews an old snapshot.
                 <IconLoader2

@@ -10,7 +10,6 @@ import { clearPrefetchMemo } from "@/lib/stream";
 import { openChannelPicker } from "@/lib/store/channel-picker";
 import { usePlaybackStore } from "@/lib/store/playback";
 import { usePinnedPlaylistsStore } from "@/lib/store/pinned-playlists";
-import { usePremiumStore } from "@/lib/store/premium";
 import { useSearchHistory } from "@/lib/store/search-history";
 import { useTrackSourceStore } from "@/lib/store/track-source";
 
@@ -168,7 +167,6 @@ export function useSessionRefreshedListener(): void {
       resetInnertube();
       void qc.invalidateQueries({ queryKey: ["auth-logged-in"] });
       void qc.invalidateQueries({ queryKey: ["account-info"] });
-      void qc.invalidateQueries({ queryKey: ["premium-status"] });
       // Everything else was fetched anonymously; none of it is truth.
       // Mounted queries refetch now, the rest on next mount, and the
       // persisted copies are overwritten as they do.
@@ -212,10 +210,9 @@ export function useAccountsChangedListener(): void {
       usePlaybackStore.getState().clearQueue();
 
       // 3. Other per-account local state: typed search history,
-      //    per-track Song↔Video preferences, cached Premium status.
+      //    per-track Song↔Video preferences.
       useSearchHistory.getState().clear();
       useTrackSourceStore.setState({ byVideoId: {} });
-      usePremiumStore.setState({ status: null });
 
       // 4. In-memory caches that wrap network state.
       resetInnertube();
@@ -269,9 +266,8 @@ export function useAccountsChangedListener(): void {
  * the active id may flip to the older entry, then the
  * `accounts-changed` event re-renders the UI with the new active id).
  *
- * Mounted alongside `usePremiumStatusSync` in AppShell. The two share
- * the `account-info` query so this hook costs one extra Tauri call
- * (`update_account_meta`) per session.
+ * Shares the `account-info` query with the rest of AppShell, so this
+ * hook costs one extra Tauri call (`update_account_meta`) per session.
  */
 export function useAccountMetaBackfill(): void {
   const qc = useQueryClient();

@@ -56,6 +56,28 @@ export type WhatsNewEntry = {
  */
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    version: "0.6.0",
+    date: "September 15, 2026",
+    summary: "Silicon Music: a new name, and free playback for everyone",
+    changes: [
+      {
+        type: "new",
+        title: "New name and look",
+        text: "YTubic is now Silicon Music, with a new icon and accent color throughout the app.",
+      },
+      {
+        type: "new",
+        title: "No more Premium requirement",
+        text: "Playback and caching no longer need a YouTube Music Premium subscription. Every account streams and caches the same way.",
+      },
+      {
+        type: "improved",
+        title: "Windows-only, from here on",
+        text: "This build now focuses entirely on Windows. Linux and macOS support has been retired.",
+      },
+    ],
+  },
+  {
     version: "0.5.1",
     date: "September 11, 2026",
     summary: "Login fixes",
@@ -133,12 +155,12 @@ export const WHATS_NEW: WhatsNewEntry[] = [
   {
     version: "0.4.7",
     date: "August 22, 2026",
-    summary: "Share links that open YTubic",
+    summary: "Share links that open Silicon Music",
     changes: [
       {
         type: "new",
         title: "Share links now open the app",
-        text: "Sharing a song, album, playlist or artist copies a link to a page that opens it right in YTubic, or on YouTube Music for people without the app.",
+        text: "Sharing a song, album, playlist or artist copies a link to a page that opens it right in Silicon Music, or on YouTube Music for people without the app.",
       },
       {
         type: "fixed",
@@ -272,26 +294,26 @@ export const WHATS_NEW: WhatsNewEntry[] = [
       {
         type: "fixed",
         title: "Signed out for no reason",
-        text: "YTubic could open with a Sign in button after a reboot, after locking your screen, or after sitting idle, while your account was fine the whole time. It no longer mistakes a failed check for a sign-out, and it renews your session properly after your PC has been asleep.",
+        text: "Silicon Music could open with a Sign in button after a reboot, after locking your screen, or after sitting idle, while your account was fine the whole time. It no longer mistakes a failed check for a sign-out, and it renews your session properly after your PC has been asleep.",
       },
       {
         type: "fixed",
         title: "The Premium dialog on every track",
-        text: "The same faulty check made YTubic forget you had Premium and put the upgrade dialog in front of every song you played.",
+        text: "The same faulty check made Silicon Music forget you had Premium and put the upgrade dialog in front of every song you played.",
       },
     ],
   },
   {
     version: "0.4.0",
     date: "July 23, 2026",
-    summary: "YTubic comes to Linux and macOS",
+    summary: "Silicon Music comes to Linux and macOS",
     image: "/whats-new/0.4.0.jpg",
     imageAlign: "top",
     changes: [
       {
         type: "new",
         title: "Linux and macOS support",
-        text: "YTubic now runs on Linux and macOS, in beta while the rough edges get filed down. Grab the build for your platform from the releases page.",
+        text: "Silicon Music now runs on Linux and macOS, in beta while the rough edges get filed down. Grab the build for your platform from the releases page.",
       },
       {
         type: "improved",
@@ -369,7 +391,7 @@ export const WHATS_NEW: WhatsNewEntry[] = [
       {
         type: "new",
         title: "Last.fm scrobbling",
-        text: "Connect your Last.fm account to scrobble every track you play. Liking a song on YTubic loves it on Last.fm, and unliking removes it.",
+        text: "Connect your Last.fm account to scrobble every track you play. Liking a song on Silicon Music loves it on Last.fm, and unliking removes it.",
       },
       {
         type: "improved",
@@ -406,7 +428,7 @@ export const WHATS_NEW: WhatsNewEntry[] = [
       {
         type: "fixed",
         title: "Windows media tile",
-        text: 'The Now Playing tile no longer shows "Unknown app" instead of YTubic\'s name and icon.',
+        text: 'The Now Playing tile no longer shows "Unknown app" instead of Silicon Music\'s name and icon.',
       },
       {
         type: "fixed",
@@ -446,18 +468,18 @@ export const WHATS_NEW: WhatsNewEntry[] = [
         text: "Switch between the YouTube channels on one Google account; your library and likes follow the channel you pick. Sign in straight from the sidebar when you're logged out.",
       },
     ],
-    note: "I really didn't want to lock playback behind anything, but YouTube's Terms of Service require ads to play and YTubic has no way to show them. To keep the project alive without breaking those terms, playback and caching now need an active YouTube Music Premium subscription. Browsing and search stay open to everyone, and YTubic itself stays completely free and open source. Thanks for understanding.",
+    note: "I really didn't want to lock playback behind anything, but YouTube's Terms of Service require ads to play and Silicon Music has no way to show them. To keep the project alive without breaking those terms, playback and caching now need an active YouTube Music Premium subscription. Browsing and search stay open to everyone, and Silicon Music itself stays completely free and open source. Thanks for understanding.",
   },
   {
     version: "0.1.0",
     date: "July 5, 2026",
-    summary: "The first public release of YTubic",
+    summary: "The first public release of Silicon Music",
     image: "/whats-new/0.1.0.jpg",
     imageAlign: "top",
     changes: [
       {
         type: "new",
-        title: "YTubic for desktop",
+        title: "Silicon Music for desktop",
         text: "Stream your full YouTube Music library in a native desktop app: playback, search, playlists, and your likes, wrapped in a fast dark UI.",
       },
     ],

@@ -9,7 +9,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { PlayerBar } from "@/components/layout/player-bar";
 import { FloatingPlayerSyncReceiver } from "@/components/layout/floating-player-sync";
-import { WindowResizeHandles } from "@/components/layout/window-resize-handles";
 import { pickHighResThumbnail } from "@/components/shared/thumbnail";
 import {
   usePlaybackStore,
@@ -85,7 +84,6 @@ export default function FloatingPlayerApp() {
             <main className="relative flex-1">
               <PlayerBar variant="floating" />
             </main>
-            <WindowResizeHandles />
           </div>
         </TooltipProvider>
         <Toaster />

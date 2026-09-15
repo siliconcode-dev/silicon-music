@@ -197,8 +197,8 @@ export function AlbumMenuItems({
 
       <Separator />
 
-      {/* One link for everyone: the share page opens the album in YTubic
-          when it's installed and falls back to YouTube Music when it isn't. */}
+      {/* One link for everyone: the share page opens the album in Silicon
+          Music when it's installed and falls back to YouTube Music when it isn't. */}
       <Item onSelect={() => void share()}>
         <IconShare3Filled />
         Share

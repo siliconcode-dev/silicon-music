@@ -10,8 +10,6 @@ import { PlayerBar } from "@/components/layout/player-bar";
 import { PlayerBarBottom } from "@/components/layout/player-bar-bottom";
 import { FloatingPlayerSync } from "@/components/layout/floating-player-sync";
 import { DragSnapOverlay } from "@/components/layout/drag-snap-overlay";
-import { WindowResizeHandles } from "@/components/layout/window-resize-handles";
-import { IS_MAC } from "@/lib/platform";
 import { EntityPageHeader } from "@/components/layout/entity-page-header";
 import {
   PlayerResizeHandle,
@@ -19,7 +17,6 @@ import {
 } from "@/components/layout/layout-resize-handle";
 import { useEntityHeaderStore } from "@/lib/store/entity-header";
 import { SettingsDialog } from "@/components/settings/settings-dialog";
-import { PremiumGateDialog } from "@/components/layout/premium-gate-dialog";
 import { ChannelPickerDialog } from "@/components/layout/channel-picker-dialog";
 import { WhatsNewDialog } from "@/components/layout/whats-new-dialog";
 import { Toaster } from "@/components/ui/sonner";
@@ -36,7 +33,6 @@ import { useWhatsNewOnUpdate } from "@/lib/store/whats-new";
 import { pickHighResThumbnail } from "@/components/shared/thumbnail";
 import { usePlaybackStore, currentTrack } from "@/lib/store/playback";
 import { useLayoutStore } from "@/lib/store/layout";
-import { usePremiumStatusSync } from "@/lib/store/premium";
 import {
   useCloseBehaviorSync,
   useDiscordPresenceSync,
@@ -97,7 +93,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   useUpdateStartupCheck();
   useWhatsNewOnUpdate();
   useDeepLinks();
-  usePremiumStatusSync();
   useLoginSuccessListener();
   useAccountsChangedListener();
   useSessionRefreshedListener();
@@ -280,9 +275,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
           <DragSnapOverlay />
           <FullscreenPlayer />
-          <WindowResizeHandles disabled={IS_MAC} />
           <SettingsDialog />
-          <PremiumGateDialog />
           <ChannelPickerDialog />
           <WhatsNewDialog />
         </div>

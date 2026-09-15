@@ -24,8 +24,8 @@ type CoverArt = {
  */
 export const LIKED_COVERS: Record<LikedCoverPreset, CoverArt> = {
   ytubic: {
-    label: "YTubic",
-    bg: "radial-gradient(130% 110% at 22% 12%,#FF5F79,#E8214C 34%,#8E1230 68%,#2A0913)",
+    label: "Silicon Music",
+    bg: "radial-gradient(130% 110% at 22% 12%,#875FFF,#5321E8 34%,#31128E 68%,#11092A)",
     ring: "var(--w140)",
     fill: "rgba(255,255,255,0.94)",
   },
@@ -44,7 +44,7 @@ export const LIKED_COVERS: Record<LikedCoverPreset, CoverArt> = {
   },
   glow: {
     label: "Glow",
-    bg: "radial-gradient(150% 130% at 100% 84%, rgba(250,31,75,0.3) 0%, rgba(250,31,75,0.16) 32%, rgba(250,31,75,0.05) 62%, var(--w040) 100%)",
+    bg: "radial-gradient(150% 130% at 100% 84%, rgba(var(--acc1rgb),0.3) 0%, rgba(var(--acc1rgb),0.16) 32%, rgba(var(--acc1rgb),0.05) 62%, var(--w040) 100%)",
     blur: "blur(18px)",
     ring: "var(--w120)",
     fill: "var(--liked-heart-glow)",

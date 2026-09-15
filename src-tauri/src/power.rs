@@ -17,10 +17,6 @@
 //!    NIC reassociates fails, and a failed refresh used to cost a full
 //!    20-minute cycle. Checking `GetNetworkConnectivityHint` first is a
 //!    cheap local call.
-//!
-//! Non-Windows targets get stubs: the resume signal simply never fires
-//! (the loop still runs on its wall-clock deadline) and connectivity is
-//! reported as available.
 
 use std::sync::Arc;
 use std::sync::OnceLock;
@@ -43,7 +39,6 @@ pub fn resume_signal() -> Arc<Notify> {
     resume_notify().clone()
 }
 
-#[cfg(windows)]
 mod imp {
     use windows_sys::Win32::Foundation::HANDLE;
     use windows_sys::Win32::NetworkManagement::IpHelper::GetNetworkConnectivityHint;
@@ -110,16 +105,6 @@ mod imp {
                 || hint.ConnectivityLevel
                     == NetworkConnectivityLevelHintConstrainedInternetAccess,
         )
-    }
-}
-
-#[cfg(not(windows))]
-mod imp {
-    pub fn register() -> Result<(), String> {
-        Ok(())
-    }
-    pub fn has_internet() -> Option<bool> {
-        None
     }
 }
 

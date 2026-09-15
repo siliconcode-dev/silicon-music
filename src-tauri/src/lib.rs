@@ -30,12 +30,10 @@ mod lastfm;
 mod media;
 mod power;
 // Taskbar thumbnail toolbar (prev / play-pause / next under the taskbar
-// preview). Windows-only shell surface; see src/thumbbar.rs.
-#[cfg(windows)]
+// preview). See src/thumbbar.rs.
 mod thumbbar;
 // Grants the microphone to our own pages without WebView2's dialog; the
 // Playback tab needs it to name and pick output devices. See the module.
-#[cfg(windows)]
 mod webview_permissions;
 mod ytdlp;
 
@@ -70,10 +68,8 @@ fn sanitize_video_id(id: &str) -> bool {
 }
 
 /// Platform-native symmetric "encrypt with current user's credentials"
-/// primitive. On Windows we use DPAPI (CryptProtectData) — the blob is
-/// only decryptable by the same Windows user on the same machine. Linux and
-/// macOS use AES-256-GCM and keep only the random data key in the native
-/// credential store (Secret Service or Keychain).
+/// primitive. Uses DPAPI (CryptProtectData) — the blob is only decryptable
+/// by the same Windows user on the same machine.
 ///
 /// A fixed `ENTROPY` byte string is mixed in so a *different* app
 /// running as the same user can't trivially pass our blob to
@@ -81,13 +77,11 @@ fn sanitize_video_id(id: &str) -> bool {
 /// against generic credential-stealer malware, not a real boundary —
 /// any attacker with our binary can read the entropy string.
 mod secure_store {
-    #[cfg(windows)]
     // Keeps the historical "ytm-native" tag on purpose: this string is
     // baked into every existing encrypted cookie jar, and changing it
     // would orphan them all. It's an opaque salt, not a product name.
     const ENTROPY: &[u8] = b"ytm-native/cookies.enc v1";
 
-    #[cfg(windows)]
     pub fn encrypt(plain: &[u8]) -> Result<Vec<u8>, String> {
         use std::ptr;
         use windows_sys::Win32::Foundation::LocalFree;
@@ -121,7 +115,6 @@ mod secure_store {
         }
     }
 
-    #[cfg(windows)]
     pub fn decrypt(encrypted: &[u8]) -> Result<Vec<u8>, String> {
         use std::ptr;
         use windows_sys::Win32::Foundation::LocalFree;
@@ -155,155 +148,6 @@ mod secure_store {
         }
     }
 
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    const KEYRING_MAGIC: &[u8; 5] = b"YTBC1";
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    const KEYRING_NONCE_LEN: usize = 12;
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    const KEYRING_KEY_LEN: usize = 32;
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    const KEYRING_SERVICE: &str = "com.github.ivasy.ytubic";
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    const KEYRING_USER: &str = "cookie-encryption-key-v1";
-
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    fn keyring_encryption_key() -> Result<[u8; KEYRING_KEY_LEN], String> {
-        use keyring::{Entry, Error};
-        use rand::RngCore;
-
-        let entry = Entry::new(KEYRING_SERVICE, KEYRING_USER)
-            .map_err(|error| format!("system credential store is unavailable: {error}"))?;
-
-        match entry.get_secret() {
-            Ok(secret) => secret.try_into().map_err(|secret: Vec<u8>| {
-                format!(
-                    "system credential store returned an invalid YTubic key ({} bytes)",
-                    secret.len()
-                )
-            }),
-            Err(Error::NoEntry) => {
-                let mut key = [0_u8; KEYRING_KEY_LEN];
-                rand::rngs::OsRng.fill_bytes(&mut key);
-                entry.set_secret(&key).map_err(|error| {
-                    format!("failed to save key in system credential store: {error}")
-                })?;
-                Ok(key)
-            }
-            Err(error) => Err(format!(
-                "failed to read key from system credential store: {error}"
-            )),
-        }
-    }
-
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    fn keyring_encrypt_with_key(
-        plain: &[u8],
-        key: &[u8; KEYRING_KEY_LEN],
-        nonce: &[u8; KEYRING_NONCE_LEN],
-    ) -> Result<Vec<u8>, String> {
-        use aes_gcm::aead::{Aead, KeyInit};
-        use aes_gcm::{Aes256Gcm, Nonce};
-
-        let cipher = Aes256Gcm::new_from_slice(key)
-            .map_err(|_| "failed to initialize cookie encryption".to_string())?;
-        let ciphertext = cipher
-            .encrypt(Nonce::from_slice(nonce), plain)
-            .map_err(|_| "failed to encrypt cookie jar".to_string())?;
-
-        let mut framed = Vec::with_capacity(KEYRING_MAGIC.len() + nonce.len() + ciphertext.len());
-        framed.extend_from_slice(KEYRING_MAGIC);
-        framed.extend_from_slice(nonce);
-        framed.extend_from_slice(&ciphertext);
-        Ok(framed)
-    }
-
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    fn keyring_decrypt_with_key(
-        encrypted: &[u8],
-        key: &[u8; KEYRING_KEY_LEN],
-    ) -> Result<Vec<u8>, String> {
-        use aes_gcm::aead::{Aead, KeyInit};
-        use aes_gcm::{Aes256Gcm, Nonce};
-
-        if !encrypted.starts_with(KEYRING_MAGIC) {
-            // Earlier builds on this platform wrote plaintext jars. Accept
-            // one so the next successful persistence pass can migrate it.
-            return Ok(encrypted.to_vec());
-        }
-
-        let payload = &encrypted[KEYRING_MAGIC.len()..];
-        if payload.len() <= KEYRING_NONCE_LEN {
-            return Err("encrypted cookie jar is truncated".to_string());
-        }
-        let (nonce, ciphertext) = payload.split_at(KEYRING_NONCE_LEN);
-        let cipher = Aes256Gcm::new_from_slice(key)
-            .map_err(|_| "failed to initialize cookie decryption".to_string())?;
-        cipher
-            .decrypt(Nonce::from_slice(nonce), ciphertext)
-            .map_err(|_| "failed to decrypt cookie jar".to_string())
-    }
-
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    pub fn encrypt(plain: &[u8]) -> Result<Vec<u8>, String> {
-        use rand::RngCore;
-
-        let key = keyring_encryption_key()?;
-        let mut nonce = [0_u8; KEYRING_NONCE_LEN];
-        rand::rngs::OsRng.fill_bytes(&mut nonce);
-        keyring_encrypt_with_key(plain, &key, &nonce)
-    }
-
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    pub fn decrypt(encrypted: &[u8]) -> Result<Vec<u8>, String> {
-        if !encrypted.starts_with(KEYRING_MAGIC) {
-            return Ok(encrypted.to_vec());
-        }
-        let key = keyring_encryption_key()?;
-        keyring_decrypt_with_key(encrypted, &key)
-    }
-
-    #[cfg(not(any(windows, target_os = "linux", target_os = "macos")))]
-    pub fn encrypt(plain: &[u8]) -> Result<Vec<u8>, String> {
-        Ok(plain.to_vec())
-    }
-
-    #[cfg(not(any(windows, target_os = "linux", target_os = "macos")))]
-    pub fn decrypt(encrypted: &[u8]) -> Result<Vec<u8>, String> {
-        Ok(encrypted.to_vec())
-    }
-
-    #[cfg(all(test, any(target_os = "linux", target_os = "macos")))]
-    mod keyring_tests {
-        use super::*;
-
-        const KEY: [u8; KEYRING_KEY_LEN] = [7; KEYRING_KEY_LEN];
-        const NONCE: [u8; KEYRING_NONCE_LEN] = [3; KEYRING_NONCE_LEN];
-
-        #[test]
-        fn encrypted_cookie_jar_round_trips() {
-            let encrypted = keyring_encrypt_with_key(b"SID=secret", &KEY, &NONCE).unwrap();
-            assert!(encrypted.starts_with(KEYRING_MAGIC));
-            assert_eq!(
-                keyring_decrypt_with_key(&encrypted, &KEY).unwrap(),
-                b"SID=secret"
-            );
-        }
-
-        #[test]
-        fn tampered_cookie_jar_is_rejected() {
-            let mut encrypted = keyring_encrypt_with_key(b"SID=secret", &KEY, &NONCE).unwrap();
-            *encrypted.last_mut().unwrap() ^= 1;
-            assert!(keyring_decrypt_with_key(&encrypted, &KEY).is_err());
-        }
-
-        #[test]
-        fn plaintext_cookie_jar_is_accepted_for_migration() {
-            assert_eq!(
-                keyring_decrypt_with_key(b"SID=legacy", &KEY).unwrap(),
-                b"SID=legacy"
-            );
-        }
-    }
 }
 
 /// Per-account metadata persisted in `accounts.json`. Cookies are NOT
@@ -408,12 +252,8 @@ fn account_webview_dir(app: &tauri::AppHandle, id: &str) -> PathBuf {
 /// same one the refresh window later renews. The claimed browser must match
 /// the actual webview engine: WebView2 presents Chrome, while WKWebView must
 /// present Safari or Google rejects the sign-in as an insecure browser.
-#[cfg(not(target_os = "macos"))]
 const YT_LOGIN_UA: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
      (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36";
-#[cfg(target_os = "macos")]
-const YT_LOGIN_UA: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 \
-     (KHTML, like Gecko) Version/17.6 Safari/605.1.15";
 
 /// WebView2 browser args shared by the login window and the session-keeper.
 /// Both open the same per-account profile directory, and WebView2 requires
@@ -1363,7 +1203,7 @@ async fn ensure_session_keeper(
     // webview still loads and keeps the session alive regardless of
     // visibility or position.
     let win = WebviewWindowBuilder::new(app, &label, WebviewUrl::External(url))
-        .title("YTubic session keeper")
+        .title("Silicon Music session keeper")
         .visible(false)
         .decorations(false)
         .focused(false)
@@ -2317,7 +2157,7 @@ async fn open_player_window(
         "player",
         WebviewUrl::App("index.html?floating-player=1".into()),
     )
-    .title("YTubic — player")
+    .title("Silicon Music player")
     .decorations(false)
     .inner_size(360.0, 720.0)
     .min_inner_size(320.0, 560.0)
@@ -3171,10 +3011,9 @@ fn resolve_stream_ytdlp(app: tauri::AppHandle, video_id: String) -> Result<Strin
         "--no-warnings",
         &url,
     ]);
-    // Windows: a console-less GUI process spawning the console-subsystem
-    // yt-dlp.exe with default flags makes Windows flash a console window
-    // on every resolve. CREATE_NO_WINDOW suppresses it.
-    #[cfg(windows)]
+    // A console-less GUI process spawning the console-subsystem yt-dlp.exe
+    // with default flags makes Windows flash a console window on every
+    // resolve. CREATE_NO_WINDOW suppresses it.
     {
         use std::os::windows::process::CommandExt;
         command.creation_flags(0x0800_0000); // CREATE_NO_WINDOW
@@ -3239,6 +3078,13 @@ struct StreamServer {
 /// Read the `ephemeral` query flag from a stream/prefetch request.
 /// True when `?ephemeral=1` (or `=true`) appears — used to route the
 /// download to `ephemeral_dir` instead of the persistent cache.
+///
+/// The frontend no longer sends this flag (playback and caching are no
+/// longer gated behind a Premium subscription — see `stream.ts`), so
+/// this now always resolves `false` and every request lands on the
+/// persistent cache. `ephemeral_dir` and its plumbing are left in place
+/// rather than ripped out, since nothing currently depends on removing
+/// them and doing so would touch the stream server's routing tests.
 fn is_ephemeral(req: &Request) -> bool {
     let Some(query) = req.uri().query() else {
         return false;
@@ -3578,9 +3424,8 @@ fn spawn_downloader(
             "-",
         ]);
         cmd.arg(&url);
-        // Windows: suppress the console window for the child yt-dlp.exe
-        // (see resolve_stream_ytdlp for rationale).
-        #[cfg(windows)]
+        // Suppress the console window for the child yt-dlp.exe (see
+        // resolve_stream_ytdlp for rationale).
         cmd.creation_flags(0x0800_0000); // CREATE_NO_WINDOW
         let mut child = match cmd.stdout(Stdio::piped()).stderr(Stdio::inherit()).spawn() {
             Ok(c) => c,
@@ -4066,7 +3911,7 @@ fn runtime_icon(app: &tauri::AppHandle) -> tauri::image::Image<'static> {
 }
 
 fn build_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
-    let show_item = MenuItem::with_id(app, "show", "Show YTubic", true, None::<&str>)?;
+    let show_item = MenuItem::with_id(app, "show", "Show Silicon Music", true, None::<&str>)?;
     let play_item = MenuItem::with_id(app, "play_pause", "Play / Pause", true, Some("Space"))?;
     let prev_item = MenuItem::with_id(app, "prev", "Previous", true, None::<&str>)?;
     let next_item = MenuItem::with_id(app, "next", "Next", true, None::<&str>)?;
@@ -4083,14 +3928,14 @@ fn build_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
     let _tray = TrayIconBuilder::with_id("main-tray")
         .icon(runtime_icon(app))
         .tooltip(if cfg!(debug_assertions) {
-            "YTubic (dev)"
+            "Silicon Music (dev)"
         } else {
-            "YTubic"
+            "Silicon Music"
         })
         .menu(&menu)
-        // macOS menu-bar extras conventionally open on left-click. Windows
-        // and Linux keep left-click reserved for restoring the main window.
-        .show_menu_on_left_click(cfg!(target_os = "macos"))
+        // Left-click is reserved for restoring the main window; the menu
+        // opens on right-click only.
+        .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id().as_ref() {
             "show" => show_main_window(app),
             "play_pause" => {
@@ -4108,9 +3953,6 @@ fn build_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
             _ => {}
         })
         .on_tray_icon_event(|tray, event| {
-            if cfg!(target_os = "macos") {
-                return;
-            }
             // Left-click the icon = show the window.
             if let TrayIconEvent::Click {
                 button: MouseButton::Left,
@@ -4128,9 +3970,8 @@ fn build_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // Register + pin the app's Windows identity (AppUserModelID) so the SMTC
-    // media tile (and notifications, taskbar) resolve to "YTubic" + icon rather
-    // than "Unknown app". Must run before any window is created. No-op off
-    // Windows.
+    // media tile (and notifications, taskbar) resolve to "Silicon Music" + icon
+    // rather than "Unknown app". Must run before any window is created.
     appid::init();
 
     let state = StreamServerState::default();
@@ -4266,13 +4107,13 @@ pub fn run() {
         })
         .setup(move |app| {
             eprintln!(
-                "[boot] YTubic {} starting (debug={})",
+                "[boot] Silicon Music {} starting (debug={})",
                 app.package_info().version,
                 cfg!(debug_assertions)
             );
             // The NSIS installer registers `ytubic://` for release builds;
-            // dev runs and Linux need the runtime registration.
-            #[cfg(any(target_os = "linux", all(debug_assertions, windows)))]
+            // dev runs need the runtime registration.
+            #[cfg(debug_assertions)]
             {
                 use tauri_plugin_deep_link::DeepLinkExt;
                 if let Err(e) = app.deep_link().register_all() {
@@ -4337,31 +4178,16 @@ pub fn run() {
                 tokio::time::sleep(Duration::from_secs(settle)).await;
                 run_refresh_loop(refresh_handle).await;
             });
-            // Native media controls: SMTC on Windows, MPRIS on Linux, and Now
-            // Playing on macOS. setup() runs on the main thread, as required by
-            // the Windows and macOS backends.
+            // Native media controls: SMTC on Windows. setup() runs on the main
+            // thread, as required by the Windows backend.
             media::init(app.handle());
             // Play / pause / next under the taskbar thumbnail preview. Also
             // main-thread-only (COM + a subclass on the main window's HWND).
-            #[cfg(windows)]
             thumbbar::init(app.handle());
             if let Err(e) = build_tray(app.handle()) {
                 eprintln!("[tray] build failed: {e}");
             }
 
-            // WebKitGTK disables smooth (kinetic) scrolling by default, so
-            // wheel scrolling otherwise jumps in coarse steps on Linux.
-            #[cfg(target_os = "linux")]
-            if let Some(w) = app.get_webview_window("main") {
-                let _ = w.with_webview(|webview| {
-                    use webkit2gtk::{SettingsExt, WebViewExt};
-                    let wv = webview.inner();
-                    if let Some(settings) = WebViewExt::settings(&wv) {
-                        settings.set_enable_smooth_scrolling(true);
-                    }
-                });
-            }
-            #[cfg(windows)]
             if let Some(w) = app.get_webview_window("main") {
                 webview_permissions::install(&w);
             }
@@ -4376,15 +4202,7 @@ pub fn run() {
         })
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
-        .run(|_app, _event| {
-            // The native red button follows our close-to-menu-bar setting and
-            // may hide the only window. A later Dock click emits Reopen; show
-            // the window again so the running app never appears unresponsive.
-            #[cfg(target_os = "macos")]
-            if let tauri::RunEvent::Reopen { .. } = _event {
-                show_main_window(_app);
-            }
-        });
+        .run(|_app, _event| {});
 }
 
 #[cfg(test)]

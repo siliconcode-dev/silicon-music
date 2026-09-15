@@ -52,7 +52,6 @@ import { IconX } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { useLayoutStore, type LayoutMode } from "@/lib/store/layout";
-import { IS_MAC } from "@/lib/platform";
 import { openSettings } from "@/lib/store/settings-dialog";
 import { AboutDialog } from "@/components/layout/about-dialog";
 
@@ -89,9 +88,7 @@ export function TopBar() {
   const [aboutOpen, setAboutOpen] = useState(false);
 
   useEffect(() => {
-    // macOS has no custom maximize glyph to keep in sync; native traffic
-    // lights own that state entirely.
-    if (!IS_TAURI || IS_MAC) return;
+    if (!IS_TAURI) return;
     let cancelled = false;
     let unlisten: (() => void) | undefined;
     const win = getCurrentWindow();
@@ -132,9 +129,7 @@ export function TopBar() {
           fullscreen ? "z-[45]" : "z-30",
         )}
       >
-        <div
-          className={`flex items-center gap-1 ${IS_MAC ? "pl-[78px]" : "pl-2"}`}
-        >
+        <div className="flex items-center gap-1 pl-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -236,41 +231,36 @@ export function TopBar() {
 
           The header's drag spacer runs the full width underneath this
           cluster; the buttons sit on top of it, so they take the click
-          rather than starting a window drag.
-
-          macOS is excluded: its traffic lights are native chrome and no
-          web overlay reaches them. */}
-      {!IS_MAC && (
-        <div
-          {...{ [WINDOW_CHROME_ATTR]: "" }}
-          className="pointer-events-auto fixed right-0 top-0 z-[60] flex h-9 items-center"
+          rather than starting a window drag. */}
+      <div
+        {...{ [WINDOW_CHROME_ATTR]: "" }}
+        className="pointer-events-auto fixed right-0 top-0 z-[60] flex h-9 items-center"
+      >
+        <button
+          type="button"
+          onClick={() => win().minimize()}
+          aria-label="Minimize"
+          className="flex h-full w-11 items-center justify-center text-foreground/85 transition-colors hover:bg-titlebar-hover"
         >
-          <button
-            type="button"
-            onClick={() => win().minimize()}
-            aria-label="Minimize"
-            className="flex h-full w-11 items-center justify-center text-foreground/85 transition-colors hover:bg-titlebar-hover"
-          >
-            <MinimizeGlyph />
-          </button>
-          <button
-            type="button"
-            onClick={() => win().toggleMaximize()}
-            aria-label={maximized ? "Restore" : "Maximize"}
-            className="flex h-full w-11 items-center justify-center text-foreground/85 transition-colors hover:bg-titlebar-hover"
-          >
-            {maximized ? <RestoreGlyph /> : <MaximizeGlyph />}
-          </button>
-          <button
-            type="button"
-            onClick={() => win().close()}
-            aria-label="Close"
-            className="flex h-full w-11 items-center justify-center text-foreground/85 transition-colors hover:bg-[#c42b1c] hover:text-white"
-          >
-            <CloseGlyph />
-          </button>
-        </div>
-      )}
+          <MinimizeGlyph />
+        </button>
+        <button
+          type="button"
+          onClick={() => win().toggleMaximize()}
+          aria-label={maximized ? "Restore" : "Maximize"}
+          className="flex h-full w-11 items-center justify-center text-foreground/85 transition-colors hover:bg-titlebar-hover"
+        >
+          {maximized ? <RestoreGlyph /> : <MaximizeGlyph />}
+        </button>
+        <button
+          type="button"
+          onClick={() => win().close()}
+          aria-label="Close"
+          className="flex h-full w-11 items-center justify-center text-foreground/85 transition-colors hover:bg-[#c42b1c] hover:text-white"
+        >
+          <CloseGlyph />
+        </button>
+      </div>
 
       <ReportIssueDialog open={reportOpen} onOpenChange={setReportOpen} />
       <AboutDialog open={aboutOpen} onOpenChange={setAboutOpen} />

@@ -1,6 +1,5 @@
-# Builds Windows (x64 and ARM64), Linux, and a universal macOS installer,
-# then publishes a single draft GitHub Release
-# whenever a `v*` tag is pushed. Publish flow:
+# Builds Windows (x64 and ARM64), then publishes a single draft GitHub
+# Release whenever a `v*` tag is pushed. Publish flow:
 #   git tag v0.1.0 && git push origin v0.1.0
 # → wait for this workflow → review the draft on the Releases page → publish.
 #
@@ -35,28 +34,9 @@ jobs:
             os: windows-latest
             args: "--target aarch64-pc-windows-msvc"
             rust_targets: "aarch64-pc-windows-msvc"
-          - name: macOS Universal
-            os: macos-latest
-            args: "--target universal-apple-darwin"
-            rust_targets: "aarch64-apple-darwin,x86_64-apple-darwin"
-          - name: Linux
-            os: ubuntu-22.04
-            args: ""
-            rust_targets: ""
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install Linux system dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            libappindicator3-dev \
-            librsvg2-dev \
-            libdbus-1-dev \
-            patchelf \
-            libgtk-3-dev
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -74,13 +54,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          # Ad-hoc macOS signature so Apple Silicon can run the build after
-          # the user approves it in Privacy & Security. No Developer ID cert
-          # yet; when one exists, export the APPLE_* env vars from a guarded
-          # $GITHUB_ENV step instead of `${{ secrets.* }}` here — a missing
-          # secret still SETS the env var (empty), which sends the bundler
-          # down the certificate-import path and fails the build.
-          APPLE_SIGNING_IDENTITY: "-"
           # Baked into the build by src-tauri/build.rs. Add these as repo
           # Actions secrets. If unset, the released build just ships with
           # scrobbling disabled and nothing else breaks.
@@ -88,15 +61,15 @@ jobs:
           YTUBIC_LASTFM_API_SECRET: ${{ secrets.YTUBIC_LASTFM_API_SECRET }}
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: "YTubic ${{ github.ref_name }}"
+          releaseName: "Silicon Music ${{ github.ref_name }}"
           releaseBody: "See the assets below to download and install this version."
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
 
-  # The bundler names its output per-packager (`_x64-setup.exe`, `_amd64.deb`,
-  # `-1.x86_64.rpm`), which doesn't tell a visitor which file is for which OS.
-  # Rename every asset to `YTubic_<version>_<OS>_<arch>.<ext>` once all three
+  # The bundler names its output per-packager (`_x64-setup.exe`), which
+  # doesn't tell a visitor which architecture a file is for. Rename every
+  # asset to `SiliconMusic_<version>_Windows_<arch>_Setup.exe` once both
   # builds have uploaded. `latest.json` points at the assets by URL, so it is
   # rewritten in the same step — the minisign signatures cover file contents,
   # not names, so they stay valid. Runs after `build` so the manifest is final.
@@ -137,13 +110,8 @@ jobs:
                 gh api --method DELETE "repos/$REPO/releases/assets/$id" < /dev/null
                 echo "removed $name"
                 continue ;;
-              *_arm64-setup.exe)           new="YTubic_${version}_Windows_arm64_Setup.exe" ;;
-              *-setup.exe)                 new="YTubic_${version}_Windows_x64_Setup.exe" ;;
-              *.app.tar.gz)                new="YTubic_${version}_macOS_Universal.app.tar.gz" ;;
-              *.dmg)                       new="YTubic_${version}_macOS_Universal.dmg" ;;
-              *.AppImage)                  new="YTubic_${version}_Linux_x86_64.AppImage" ;;
-              *.deb)                       new="YTubic_${version}_Linux_x86_64.deb" ;;
-              *.rpm)                       new="YTubic_${version}_Linux_x86_64.rpm" ;;
+              *_arm64-setup.exe)           new="SiliconMusic_${version}_Windows_arm64_Setup.exe" ;;
+              *-setup.exe)                 new="SiliconMusic_${version}_Windows_x64_Setup.exe" ;;
               *)                           echo "skipping unrecognized asset: $name"; continue ;;
             esac
             # `[ ... ] && continue` would abort the whole step under `set -e`

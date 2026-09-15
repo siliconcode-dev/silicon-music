@@ -13,24 +13,17 @@ import { prefetchStream, saveTrackMeta, streamUrlFor } from "@/lib/stream";
 import { AudioGraph, canSelectOutputDevice } from "@/lib/audio-graph";
 import { usePlaybackStore, type QueueTrack } from "@/lib/store/playback";
 import { eqGains, usePlaybackSettings } from "@/lib/store/playback-settings";
-import { usePremiumStore } from "@/lib/store/premium";
 import { useSettingsStore } from "@/lib/store/settings";
-import { openPremiumGate } from "@/lib/store/premium-gate";
 import { resolveStreamId, useTrackSourceStore } from "@/lib/store/track-source";
 import { pickThumbnail } from "@/components/shared/thumbnail";
-import { IS_MAC } from "@/lib/platform";
 
 /**
  * AudioEngine binds the playback store to a singleton HTMLAudioElement and
  * drives the native media controls.
  *
- * On Windows and Linux that happens from Rust via souvlaki (SMTC / MPRIS; see
- * src-tauri/src/media.rs), and the webview's own media session stays disabled
- * because it belongs to the WebView2 child process and appears as an "Unknown
- * app" duplicate. macOS is the exact opposite: WKWebView's media session is the
- * host process's own and always wins the media keys, so we feed it directly
- * through `navigator.mediaSession` and skip souvlaki entirely — without that, a
- * bare <audio> element leaves next/previous unhandled and the keys do nothing.
+ * That happens from Rust via souvlaki (SMTC; see src-tauri/src/media.rs), and
+ * the webview's own media session stays disabled because it belongs to the
+ * WebView2 child process and appears as an "Unknown app" duplicate.
  *
  * Two <audio> elements exist, one active and one standby. Crossfade
  * preloads the next track on the standby element a few seconds before the
@@ -232,8 +225,7 @@ export function useAudioEngine() {
 
       if (!pendingRef.current && remaining <= cf + CROSSFADE_PRELOAD_LEAD_SEC) {
         const standby = standbyRef.current;
-        // Same gate as the resolve effect: no stream without Premium.
-        if (!standby || usePremiumStore.getState().status !== "premium") {
+        if (!standby) {
           return;
         }
         const p: PendingNext = {
@@ -438,13 +430,6 @@ export function useAudioEngine() {
     videoId ? resolveStreamId(videoId, s.byVideoId) : undefined,
   );
 
-  // Reactive Premium check for the gate below. Subscribing (rather than
-  // calling isPremium() inside the effect) makes the resolve effect
-  // re-run when the status lands after sign-in / the launch-time probe.
-  // Without this, a track gated during the "still checking" window would
-  // sit silent until the user re-picked it.
-  const premiumOk = usePremiumStore((s) => s.status === "premium");
-
   useEffect(() => {
     const el = audioRef.current;
     if (!el) return;
@@ -482,25 +467,6 @@ export function useAudioEngine() {
       el.removeAttribute("src");
       el.load();
       usePlaybackStore.getState().setStreamUrl(undefined);
-      return;
-    }
-    // Premium gate: signed-out / Free accounts browse but don't stream.
-    // Every entry path (track clicks, media keys, tray, floating window,
-    // restored queues) funnels through this effect, so one check here
-    // guarantees no yt-dlp spawn and no cache write happens without
-    // Premium. A deliberate play attempt (playing=true) gets the
-    // explainer dialog; the silent preload of a restored queue
-    // (playing=false) just parks the track.
-    if (!premiumOk) {
-      el.removeAttribute("src");
-      el.load();
-      const store = usePlaybackStore.getState();
-      store.setStreamUrl(undefined);
-      store.setStatus("idle");
-      if (store.playing) {
-        store.setPlaying(false);
-        openPremiumGate();
-      }
       return;
     }
     // Drop the previous track's src immediately. Otherwise a paused→playing
@@ -582,25 +548,16 @@ export function useAudioEngine() {
     // videoId/streamVideoId alone wouldn't change. Repeating a *single*
     // track (repeat-one, or repeat-all on a 1-track queue) keeps the same
     // index, so the store replays it via pendingSeek instead — see
-    // `next()` in store/playback.ts. `premiumOk` so that gaining Premium
-    // (sign-in, status re-check) re-resolves a track the gate parked.
-    // `retryNonce` so the error handler can force a fresh stream-URL fetch
-    // for the current track after a transient failure without changing id.
-  }, [streamVideoId, videoId, index, premiumOk, retryNonce]);
+    // `next()` in store/playback.ts. `retryNonce` so the error handler can
+    // force a fresh stream-URL fetch for the current track after a
+    // transient failure without changing id.
+  }, [streamVideoId, videoId, index, retryNonce]);
 
   // Play / pause follow store.
   const playing = usePlaybackStore((s) => s.playing);
   useEffect(() => {
     const el = audioRef.current;
     if (!el) return;
-    if (playing && !premiumOk) {
-      // Resume attempts (play button, Space, SMTC play) on a gated track
-      // never reach the resolve effect (its deps don't include
-      // `playing`), so intercept them here.
-      usePlaybackStore.getState().setPlaying(false);
-      openPremiumGate();
-      return;
-    }
     if (!el.src) return;
     if (playing) {
       graphRef.current?.resume();
@@ -614,7 +571,7 @@ export function useAudioEngine() {
       cancelFade();
       el.pause();
     }
-  }, [playing, premiumOk]);
+  }, [playing]);
 
   // Volume / mute follow store.
   const volume = usePlaybackStore((s) => s.volume);
@@ -717,31 +674,6 @@ export function useAudioEngine() {
   // "Unknown app" because it belongs to the WebView2 child process. Metadata /
   // state is pushed by the media_update effect lower down; buttons come back
   // via the media-control listener. See src-tauri/src/media.rs.
-
-  // macOS only: WKWebView owns the Now Playing session (see the hook comment),
-  // and the play/pause key already works because WebKit pauses the element
-  // itself — but that also means it flips `el.paused` behind the store's back,
-  // so the handlers below exist to keep the store authoritative and to supply
-  // the next/previous/seek commands a bare <audio> session simply doesn't have.
-  useEffect(() => {
-    if (!IS_MAC || !("mediaSession" in navigator)) return;
-    const ms = navigator.mediaSession;
-    const store = usePlaybackStore.getState;
-    ms.setActionHandler("play", () => store().setPlaying(true));
-    ms.setActionHandler("pause", () => store().setPlaying(false));
-    ms.setActionHandler("nexttrack", () => store().next());
-    ms.setActionHandler("previoustrack", () => store().prev());
-    ms.setActionHandler("seekto", (d) => {
-      if (typeof d.seekTime === "number") store().seek(d.seekTime);
-    });
-    return () => {
-      ms.setActionHandler("play", null);
-      ms.setActionHandler("pause", null);
-      ms.setActionHandler("nexttrack", null);
-      ms.setActionHandler("previoustrack", null);
-      ms.setActionHandler("seekto", null);
-    };
-  }, []);
 
   // Tray menu commands come via a Tauri event. `cancelled` flag
   // protects against StrictMode's mount→unmount→mount race that
@@ -959,53 +891,8 @@ export function useAudioEngine() {
     retry: false,
   }).data;
   const liked = track ? getLikedIdsSet(likedSongs).has(track.videoId) : false;
-  // Signature of the metadata last handed to navigator.mediaSession. Re-setting
-  // `ms.metadata` makes WebKit re-fetch the artwork URL, so the 2s position
-  // refresh must not rebuild it — mirrors the LAST_META guard in media.rs.
-  const lastMacMetaRef = useRef<string | null>(null);
   useEffect(() => {
-    // macOS: same cadence, but written to the session the OS actually listens
-    // to (see the hook comment) rather than round-tripped through souvlaki.
-    const pushMac = () => {
-      const ms = navigator.mediaSession;
-      const s = usePlaybackStore.getState();
-      const t = s.index >= 0 ? s.queue[s.index] : undefined;
-      if (!t) {
-        lastMacMetaRef.current = null;
-        ms.metadata = null;
-        ms.playbackState = "none";
-        return;
-      }
-      const artist = buildArtistLabel(t);
-      const album = t.album ?? "";
-      const cover = pickThumbnail(t.thumbnails, 512) ?? "";
-      const sig = `${t.title}${artist}${album}${cover}`;
-      if (lastMacMetaRef.current !== sig) {
-        lastMacMetaRef.current = sig;
-        ms.metadata = new MediaMetadata({
-          title: t.title,
-          artist,
-          album,
-          artwork: cover ? [{ src: cover, sizes: "512x512" }] : [],
-        });
-      }
-      ms.playbackState = s.playing ? "playing" : "paused";
-      const dur = Number.isFinite(s.duration) ? s.duration : 0;
-      // setPositionState rejects a position past the duration, and a 0/absent
-      // duration outright — both happen briefly while a track is resolving.
-      if (dur > 0) {
-        ms.setPositionState({
-          duration: dur,
-          position: Math.min(Math.max(s.position, 0), dur),
-          playbackRate: 1,
-        });
-      }
-    };
     const push = () => {
-      if (IS_MAC && "mediaSession" in navigator) {
-        pushMac();
-        return;
-      }
       const s = usePlaybackStore.getState();
       const t = s.index >= 0 ? s.queue[s.index] : undefined;
       if (!t) {

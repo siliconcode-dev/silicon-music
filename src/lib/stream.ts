@@ -1,16 +1,10 @@
 import { invoke } from "@tauri-apps/api/core";
-import { isPremium } from "@/lib/store/premium";
 import type { QueueTrack } from "@/lib/store/playback";
 
 /**
  * The Rust side runs a tiny axum server on a random localhost port that
  * streams yt-dlp output progressively. We query the port once and build
  * stream URLs from it.
- *
- * Non-Premium / signed-out users append `?ephemeral=1` to every stream
- * URL. The Rust handler reads that as "serve playback but write to a
- * session-only cache directory that gets wiped on every app startup" —
- * a persistent on-disk library of tracks is a Premium-only feature.
  */
 
 let baseUrlPromise: Promise<string> | null = null;
@@ -39,29 +33,21 @@ export function getStreamBaseUrl(): Promise<string> {
   return baseUrlPromise;
 }
 
-function ephemeralSuffix(): string {
-  return isPremium() ? "" : "?ephemeral=1";
-}
-
 export async function streamUrlFor(videoId: string): Promise<string> {
   const base = await getStreamBaseUrl();
-  return `${base}/stream/${encodeURIComponent(videoId)}${ephemeralSuffix()}`;
+  return `${base}/stream/${encodeURIComponent(videoId)}`;
 }
 
 const prefetched = new Set<string>();
 
 /**
  * Warm the disk cache for a videoId in the background. No-ops if we
- * already fired a prefetch for this id in this session, or if the user
- * isn't on Premium — pre-warming a session-only cache doesn't help once
- * the user advances past the prefetched track (the next app launch
- * wipes it anyway).
+ * already fired a prefetch for this id in this session.
  *
  * The server itself is idempotent on a per-file basis (checks .part /
  * .webm existence), so re-firing is cheap but still skippable.
  */
 export async function prefetchStream(videoId: string): Promise<void> {
-  if (!isPremium()) return;
   if (prefetched.has(videoId)) return;
   prefetched.add(videoId);
   try {
@@ -83,9 +69,8 @@ const metaWritten = new Set<string>();
 /**
  * Persist a cached track's display metadata (title + artist) to a
  * sidecar next to its `.webm`, so the Storage tab can show a real name
- * for the track without waiting on — or being limited to — the library
- * walk. Only meaningful for the persistent (Premium) cache; ephemeral
- * streams are wiped on launch, so there's nothing on disk to label.
+ * for the track without waiting on, or being limited to, the library
+ * walk.
  *
  * `videoId` is the STREAM id (the file that actually lands on disk),
  * which may differ from the queue's display id when the user has toggled
@@ -97,7 +82,6 @@ export async function saveTrackMeta(
   videoId: string,
   track: Pick<QueueTrack, "title" | "subtitle" | "artists"> | undefined,
 ): Promise<void> {
-  if (!isPremium()) return;
   if (!track?.title) return;
   if (metaWritten.has(videoId)) return;
   metaWritten.add(videoId);

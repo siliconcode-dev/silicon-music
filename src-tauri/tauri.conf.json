@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "YTubic",
-  "version": "0.5.1",
+  "productName": "Silicon Music",
+  "version": "0.6.0",
   "identifier": "com.github.ivasy.ytubic",
   "build": {
     "beforeDevCommand": "pnpm dev",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "YTubic",
+        "title": "Silicon Music",
         "width": 1280,
         "height": 800,
         "minWidth": 900,
@@ -37,7 +37,6 @@
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
-      "icons/icon.icns",
       "icons/icon.ico"
     ]
   },

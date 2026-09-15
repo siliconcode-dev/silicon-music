@@ -395,8 +395,8 @@ export function TrackMenuItems({
 
       <Separator />
 
-      {/* One link for everyone: the share page opens the track in YTubic
-          when it's installed and falls back to YouTube Music when it isn't. */}
+      {/* One link for everyone: the share page opens the track in Silicon
+          Music when it's installed and falls back to YouTube Music when it isn't. */}
       <Item onSelect={() => void copyLink(universalShareUrl("watch", item.id))}>
         <IconShare3Filled />
         Share

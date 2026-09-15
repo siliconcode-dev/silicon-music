@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/dialog";
 import { checkForUpdates, beginUpdateInstall } from "@/lib/updater";
 import { useUpdateStore } from "@/lib/store/update";
-import { IS_BETA_PLATFORM, IS_MAC } from "@/lib/platform";
 import { openWhatsNew } from "@/lib/store/whats-new";
 import { DiscordIcon, GithubIcon, XIcon } from "@/components/shared/brand-icons";
 import { cn } from "@/lib/utils";
@@ -124,7 +123,7 @@ export function AboutDialog({
           {/* Right padding clears the close button. */}
           <div className="flex items-center gap-4 pr-[34px]">
             <img
-              src="/ytubic-icon.svg"
+              src="/silicon-music-icon.png"
               alt=""
               // The design draws a 16px squircle here, but our icon is a
               // circular disc — a box-shadow follows the element's radius,
@@ -133,14 +132,11 @@ export function AboutDialog({
             />
             <div className="flex min-w-0 flex-col gap-[9px]">
               <DialogTitle className="text-[23px] font-bold leading-none tracking-[-0.02em] text-t1">
-                YTubic
+                Silicon Music
               </DialogTitle>
               <div className="flex items-center gap-2">
                 <span className="text-[13px] text-t5">
                   {version ? `Version ${version}` : " "}
-                  {version && IS_BETA_PLATFORM
-                    ? ` · beta for ${IS_MAC ? "macOS" : "Linux"}`
-                    : ""}
                 </span>
                 <span aria-hidden className="h-3 w-px bg-w140" />
                 <button
@@ -166,21 +162,6 @@ export function AboutDialog({
             "YouTube" and "YouTube Music" are trademarks of Google LLC.
           </DialogDescription>
 
-          {IS_BETA_PLATFORM && (
-            <p className="text-[13.5px] leading-[1.55] text-t4 text-pretty">
-              The {IS_MAC ? "macOS" : "Linux"} build is in beta. If something
-              breaks, please report it via the window menu (⋯ → Report an
-              issue) or on{" "}
-              <button
-                type="button"
-                onClick={link(`${REPO_URL}/issues`)}
-                className="cursor-pointer underline underline-offset-2 hover:text-t2"
-              >
-                GitHub
-              </button>
-              .
-            </p>
-          )}
 
           <div className="mt-1 flex flex-col gap-3 rounded-xl border border-w075 bg-w028 px-5 py-4">
             <div className="flex items-baseline justify-between gap-3">

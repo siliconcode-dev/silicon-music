@@ -85,7 +85,7 @@ function LoggedOutState() {
         <h2 className="text-xl font-semibold">Sign in to see your library</h2>
         <p className="text-sm text-muted-foreground">
           Import your YouTube Music session from a browser to unlock liked
-          songs, playlists, and premium-quality streams.
+          songs and playlists.
         </p>
       </div>
       <Button onClick={() => openSettings("general")}>Go to Settings</Button>

@@ -98,7 +98,7 @@ export function ChannelPickerDialog() {
           </DialogTitle>
           <DialogDescription className="text-[13.5px] leading-[1.5] text-t4 text-pretty">
             Your library, likes and recommendations belong to the channel, not
-            the account. Pick the one YTubic should use.
+            the account. Pick the one Silicon Music should use.
           </DialogDescription>
         </DialogHeader>
 

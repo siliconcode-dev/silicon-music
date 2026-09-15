@@ -1,7 +1,7 @@
 [package]
 name = "ytubic"
-version = "0.5.1"
-description = "YTubic — fast, responsive YouTube Music desktop client"
+version = "0.6.0"
+description = "Silicon Music, fast, responsive YouTube Music desktop client"
 authors = ["George Shyshov"]
 license = "GPL-3.0-only"
 edition = "2021"
@@ -56,26 +56,28 @@ tauri-plugin-process = "2.3.1"
 tauri-plugin-autostart = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-notification = "2"
-# Native media controls: SMTC on Windows, MPRIS on Linux, and Now Playing on
-# macOS. We create the Windows SMTC from the host process so the tile resolves
-# to YTubic's identity instead of the msedgewebview2.exe child. See media.rs.
+# Native media controls: SMTC on Windows. We create the Windows SMTC from the
+# host process so the tile resolves to Silicon Music's identity instead of the
+# msedgewebview2.exe child. See media.rs.
 souvlaki = "0.7"
 # Discord Rich Presence: talks to the local Discord client over its IPC
 # socket / named pipe (no native deps beyond that). Off by default; opt-in
 # from Settings. See src/discord.rs. Set YTUBIC_DISCORD_APP_ID at build time
-# (or edit APP_ID) to the Application ID of a Discord app named "YTubic".
+# (or edit APP_ID) to the Application ID of a Discord app named "Silicon Music".
 discord-rich-presence = "0.2"
 # MD5 for Last.fm request signing (api_sig = md5 of sorted params + secret).
 # Tiny, single-purpose crate. See src/lastfm.rs.
 md5 = "0.7"
 
-[target.'cfg(windows)'.dependencies]
+# Windows is the only target now; these used to live under
+# [target.'cfg(windows)'.dependencies] but there is no other platform left
+# to distinguish them from.
 windows-sys = { version = "0.59", features = [
     "Win32_Foundation",
     "Win32_Security_Cryptography",
     # SetCurrentProcessExplicitAppUserModelID — pins our AppUserModelID onto the
     # process so the SMTC media tile resolves (via the installer's matching Start
-    # Menu shortcut) to "YTubic" instead of "Unknown app". See src/appid.rs.
+    # Menu shortcut) to "Silicon Music" instead of "Unknown app". See src/appid.rs.
     "Win32_UI_Shell",
     # PowerRegisterSuspendResumeNotification: wake the session-refresh loop on
     # resume from sleep/standby instead of waiting out a tokio timer that may
@@ -111,19 +113,6 @@ resvg = { version = "0.48.1", default-features = false }
 # PermissionRequested handler on the main webview (src/webview_permissions.rs).
 # Same version tauri/wry already compile.
 webview2-com = "0.38"
-
-[target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
-# Cookie jars remain files in app data, but their random AES key lives in the
-# native credential store: Secret Service on Linux and Keychain on macOS.
-aes-gcm = "0.10"
-keyring = "4.1.5"
-rand = "0.8"
-
-[target.'cfg(target_os = "linux")'.dependencies]
-# Reach the underlying WebKitGTK WebView for Linux-only settings that wry
-# does not expose. Keep this pinned to the version already used by wry so
-# `PlatformWebview::inner()` returns the same type.
-webkit2gtk = "=2.0.2"
 
 [dev-dependencies]
 # ServiceExt::oneshot for the stream-server routing test.
