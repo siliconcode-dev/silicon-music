@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   IconAdjustmentsFilled,
+  IconBroadcast,
   IconCheck,
   IconChevronDown,
   IconCircleFilled,
@@ -28,6 +29,7 @@ import {
   type BackButtonMode,
   type EqPreset,
 } from "@/lib/store/playback-settings";
+import { usePlaybackStore } from "@/lib/store/playback";
 import { useSettingsStore } from "@/lib/store/settings";
 import { SOURCE_LABELS, SOURCE_ORDER } from "@/lib/lyrics/sources";
 import { canSelectOutputDevice } from "@/lib/audio-graph";
@@ -54,11 +56,38 @@ export function PlaybackTab() {
       <BackButtonGroup />
       <Group>
         <ResumeRow />
+        <AutoRadioRow />
       </Group>
       <Group>
         <LyricsProviderRow />
       </Group>
     </TabPane>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Auto Radio                                                          */
+/* ------------------------------------------------------------------ */
+
+/** Same toggle as the broadcast icon in the queue panel — this just makes
+ *  it discoverable and settable from Settings, with a sane default. */
+function AutoRadioRow() {
+  const autoRadio = usePlaybackStore((s) => s.autoRadio);
+  const setAutoRadio = usePlaybackStore((s) => s.setAutoRadio);
+
+  return (
+    <SettingRow
+      icon={IconBroadcast}
+      title="Auto Radio"
+      description="Keep an endless queue going with similar tracks once you reach the end, instead of stopping."
+      control={
+        <Switch
+          checked={autoRadio}
+          onCheckedChange={setAutoRadio}
+          aria-label="Auto Radio"
+        />
+      }
+    />
   );
 }
 

@@ -174,7 +174,10 @@ const playbackStateCreator: StateCreator<PlaybackState> = (set, get) => ({
   index: -1,
   shuffle: false,
   repeat: "off",
-  autoRadio: false,
+  // Defaults on: most people want the queue to keep going with more of
+  // the same rather than stopping and making them click Start radio
+  // (or this toggle in the queue panel) every time it runs out.
+  autoRadio: true,
   queueContinuation: undefined,
 
   status: "idle",
