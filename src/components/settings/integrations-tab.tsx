@@ -15,7 +15,12 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Group, SettingRow, TabPane } from "@/components/settings/primitives";
 import { useSettingsStore } from "@/lib/store/settings";
-import { DiscordIcon, LastfmIcon } from "@/components/shared/brand-icons";
+import { openSpotifyPanel } from "@/lib/store/spotify-panel";
+import {
+  DiscordIcon,
+  LastfmIcon,
+  SpotifyIcon,
+} from "@/components/shared/brand-icons";
 
 /** Return shape of the `lastfm_begin_auth` command (camelCased by serde). */
 type BeginAuth = { token: string; authUrl: string };
@@ -264,9 +269,45 @@ function LastfmSection() {
 }
 
 /**
+ * Spotify block: a master switch gating the whole integration (OAuth,
+ * playlist import, background sync — see project docs), plus an entry
+ * point into the dedicated panel where accounts are actually connected.
+ * Off by default, matching Discord/Last.fm.
+ */
+function SpotifySection() {
+  const enabled = useSettingsStore((s) => s.spotifyEnabled);
+  const setEnabled = useSettingsStore((s) => s.setSpotifyEnabled);
+
+  return (
+    <div className="flex flex-col">
+      <SettingRow
+        icon={SpotifyIcon}
+        title="Spotify Integration"
+        description="Import Spotify playlists into YouTube Music and keep them in sync."
+        control={
+          <Switch
+            checked={enabled}
+            onCheckedChange={setEnabled}
+            aria-label="Spotify Integration"
+          />
+        }
+      />
+      {enabled ? (
+        <div className="pb-4 pl-12">
+          <Button variant="outline" size="sm" onClick={openSpotifyPanel}>
+            Manage Spotify
+          </Button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/**
  * Integrations tab: third-party services YTubic can broadcast to.
  * Discord Rich Presence and Last.fm scrobbling both react to the same
- * now-playing state, mirrored out over their own backends.
+ * now-playing state, mirrored out over their own backends; Spotify is a
+ * larger, opt-in integration with its own dedicated panel.
  */
 export function IntegrationsTab() {
   const discordRichPresence = useSettingsStore((s) => s.discordRichPresence);
@@ -291,6 +332,7 @@ export function IntegrationsTab() {
         />
       </Group>
       <LastfmSection />
+      <SpotifySection />
     </TabPane>
   );
 }

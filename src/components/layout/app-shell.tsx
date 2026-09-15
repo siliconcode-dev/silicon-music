@@ -19,6 +19,7 @@ import { useEntityHeaderStore } from "@/lib/store/entity-header";
 import { SettingsDialog } from "@/components/settings/settings-dialog";
 import { ChannelPickerDialog } from "@/components/layout/channel-picker-dialog";
 import { WhatsNewDialog } from "@/components/layout/whats-new-dialog";
+import { SpotifyPanelDialog } from "@/components/settings/spotify-panel-dialog";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAudioEngine } from "@/lib/audio-engine";
@@ -278,6 +279,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <SettingsDialog />
           <ChannelPickerDialog />
           <WhatsNewDialog />
+          <SpotifyPanelDialog />
         </div>
       </SidebarProvider>
       <Toaster />

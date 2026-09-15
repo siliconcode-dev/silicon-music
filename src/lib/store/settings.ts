@@ -76,6 +76,16 @@ type State = {
    *  scrobbling and off by default: an opt-in, since people often keep their
    *  likes intentionally different per platform. See `lib/lastfm.ts`. */
   lastfmLoveSync: boolean;
+  /** Master switch for the whole Spotify integration (OAuth, playlist
+   *  import, background sync). Off by default: nothing OAuth-related is
+   *  reachable and no polling starts until this is on. See
+   *  `lib/store/spotify-accounts.ts` and `src-tauri/src/spotify_auth.rs`. */
+  spotifyEnabled: boolean;
+  /** Client ID of the user's own Spotify Developer app. Not a secret (PKCE
+   *  needs none) but there is no shared, build-time credential like
+   *  Discord's/Last.fm's: Spotify's Development Mode caps an app at a
+   *  handful of authorized users, so every user registers their own app. */
+  spotifyClientId: string | null;
   setCloseAction: (v: CloseButtonAction) => void;
   setCacheAutoClean: (v: CacheAutoCleanPeriod) => void;
   markCacheCleaned: () => void;
@@ -93,6 +103,8 @@ type State = {
   setLastfmSession: (username: string, sessionKey: string) => void;
   /** Forget the connected account and stop scrobbling. */
   clearLastfmSession: () => void;
+  setSpotifyEnabled: (v: boolean) => void;
+  setSpotifyClientId: (v: string | null) => void;
 };
 
 /**
@@ -119,6 +131,8 @@ export const useSettingsStore = create<State>()(
       lastfmUsername: null,
       lastfmAvatar: null,
       lastfmLoveSync: false,
+      spotifyEnabled: false,
+      spotifyClientId: null,
       setCloseAction: (closeAction) => set({ closeAction }),
       setCacheAutoClean: (cacheAutoClean) => set({ cacheAutoClean }),
       markCacheCleaned: () => set({ lastCacheCleanAt: Date.now() }),
@@ -144,6 +158,8 @@ export const useSettingsStore = create<State>()(
           lastfmEnabled: false,
           lastfmLoveSync: false,
         }),
+      setSpotifyEnabled: (spotifyEnabled) => set({ spotifyEnabled }),
+      setSpotifyClientId: (spotifyClientId) => set({ spotifyClientId }),
     }),
     { name: "ytm-settings" },
   ),
