@@ -1,108 +1,120 @@
 # UI refresh — backlog
 
-Перенос дизайн-хендоффа из Claude Design («Улучшение UI экрана») в приложение.
-Идём частями; здесь то, что осознанно отложено.
+Porting the design handoff from Claude Design ("Screen UI improvement")
+into the app. Going in parts; this is what's been deliberately deferred.
 
-Дата: 2026-08-24.
+Date: 2026-08-24. Updated 2026-09-15: the accent color no longer comes from
+the handoff's YouTube-red value (see the rebrand commit) and the Premium
+chip mentioned below was removed along with the Premium gate.
 
-## Сделано
+## Done
 
-- [x] Токены. Палитра хендоффа (`t1..t10`, `w020..w350`, `k180..k900`,
-      `surf1..7`, `glass1..6`, `acc1..5`, `desk1..3`, `fs-*`) добавлена рядом
-      с shadcn-семантикой в `src/index.css`: светлые значения в `:root`,
-      тёмные в `.dark`, все выведены в `@theme inline`. Семантические токены
-      намеренно **не** перенаправлены — компоненты переезжают по одному.
-      Акцент `--brand` подтянут с `#fa1f3e` на `#fa1f4b`.
-- [x] Кнопки (`src/components/ui/button.tsx`).
-- [x] Сайдбар (`app-sidebar.tsx`, `ui/sidebar.tsx`), иконки переведены на
+- [x] Tokens. The handoff's palette (`t1..t10`, `w020..w350`, `k180..k900`,
+      `surf1..7`, `glass1..6`, `acc1..5`, `desk1..3`, `fs-*`) was added
+      alongside the shadcn semantics in `src/index.css`: light values in
+      `:root`, dark in `.dark`, all exposed via `@theme inline`. The
+      semantic tokens are deliberately **not** redirected onto it —
+      components move over one at a time. The `--brand` accent was
+      originally nudged from `#fa1f3e` to `#fa1f4b` (YouTube red); it now
+      uses a different hue entirely after the rebrand.
+- [x] Buttons (`src/components/ui/button.tsx`).
+- [x] Sidebar (`app-sidebar.tsx`, `ui/sidebar.tsx`), icons moved to
       `@tabler/icons-react`.
 
-## Сайдбар — вернуться позже
+## Sidebar — revisit later
 
-- [x] Анимация сворачивания / разворачивания: кривая приведена к
-      прототипу, `width .22s cubic-bezier(.32,.72,0,1)` вместо
-      `150ms linear`, той же кривой едет заголовок группы.
-- [ ] Перепроверить drag-resize: транзишен на время перетаскивания уже
-      глушится классом `body.layout-resizing` (см. `index.css`), так что
-      пункт может быть устаревшим.
-- [ ] Попробовать хайрлайн между Browse и Playlists в свёрнутом виде —
-      сейчас там только 16px отступа (`mt-4`), потому что заголовок секции
-      выведен из потока.
-- [ ] Обновить дизайн строки профиля и чипа Premium.
+- [x] Collapse/expand animation: the curve now matches the prototype,
+      `width .22s cubic-bezier(.32,.72,0,1)` instead of `150ms linear`,
+      with the group heading riding the same curve.
+- [ ] Re-check drag-resize: the transition is already suppressed during a
+      drag via the `body.layout-resizing` class (see `index.css`), so this
+      item may be stale.
+- [ ] Try a hairline between Browse and Playlists in the collapsed state —
+      right now there's just 16px of spacing (`mt-4`), because the section
+      heading is taken out of flow.
+- [ ] Update the profile row design (the Premium chip it used to mention
+      no longer exists — the Premium gate was removed).
 
-## Тосты - вернуться позже
+## Toasts — revisit later
 
-- [ ] Переработать сами тексты сообщений. Сейчас во многих местах в тост
-      летит сырой `String(e)` целиком, из-за чего заголовок это стек или
-      техническая строка. Нужен человеческий заголовок + короткое
-      пояснение в description, как в прототипе («Couldn’t set cover» /
-      «Image is larger than 3 MB»). Особенно это касается ошибок:
-      `app-sidebar`, `storage-tab`, `integrations-tab`, `player-bar`,
-      `like-buttons`, `album-menu`.
+- [ ] Rework the message copy itself. Right now many places dump the raw
+      `String(e)` straight into the toast, so the title ends up being a
+      stack trace or a technical string. Needs a human title + a short
+      explanation in the description, like the prototype ("Couldn't set
+      cover" / "Image is larger than 3 MB"). This especially affects
+      errors in: `app-sidebar`, `storage-tab`, `integrations-tab`,
+      `player-bar`, `like-buttons`, `album-menu`.
 
-## Кастомные filled-иконки
+## Custom filled icons
 
-18 иконок, у которых в Tabler 3.46 нет filled-двойника, нарисованы вручную
-в `src/components/shared/filled-icons.tsx` на той же сетке 24x24. Часть
-собрана из штатных filled-глифов Tabler (`IconHeartFilled`,
-`IconEyeFilled`, `IconPinFilled`, `IconSettingsFilled`), часть с нуля.
-Несколько прорезают дырки через `<mask>`, поэтому id маски берётся из
-`useId()`: одна и та же иконка может встретиться на странице дважды, и с
-фиксированным id вторая копия подхватит маску первой.
+18 icons that have no filled counterpart in Tabler 3.46 were drawn by hand
+in `src/components/shared/filled-icons.tsx` on the same 24x24 grid. Some
+were assembled from Tabler's own filled glyphs (`IconHeartFilled`,
+`IconEyeFilled`, `IconPinFilled`, `IconSettingsFilled`), others from
+scratch. A few cut holes via `<mask>`, so the mask id comes from `useId()`:
+the same icon can appear twice on a page, and with a fixed id the second
+copy would pick up the first one's mask.
 
-Sign out / sign in оставлены контурными: дверь задаётся стенками, а не
-массой, поэтому у них просто `stroke={2.3}`.
+Sign out / sign in were left as outlines: the door is defined by its walls
+rather than its mass, so they just use `stroke={2.3}`.
 
-Стрелки без внутренней области (`IconLoader2`, `IconRefresh`, `IconSortAZ`,
-`IconSortDescending`, `IconArrowsShuffle2`, `IconChevronUp`) не трогали.
+Arrows with no interior area (`IconLoader2`, `IconRefresh`, `IconSortAZ`,
+`IconSortDescending`, `IconArrowsShuffle2`, `IconChevronUp`) were left
+untouched.
 
-## Известные расхождения с макетом
+## Known differences from the mockup
 
-- Ширина сайдбара: в макете 200px, в приложении 256px по умолчанию и
-  тянется мышью с сохранением. Не перебивали пользовательское значение.
-- Иконки Library и шестерёнка Settings в прототипе нарисованы из **Lucide**,
-  а не Tabler (дизайнер смешал наборы). Взяли Tabler: `IconBookmarks` /
-  `IconBookmarksFilled` для Library — у него, в отличие от `IconBooks`, есть
-  filled-двойник для активного состояния.
-- `IconBrandSafariFilled` (активный Explore) в Tabler 3.46 отсутствует;
-  используем `IconCompassFilled`, у него добавлены точки-риски по краям.
-- Пикер обложки Liked songs из прототипа (4 пресета + свой URL) не
-  переносили — взяли его дефолт «YTubic» как статичный `.liked-cover`.
+- Sidebar width: 200px in the mockup, 256px by default in the app and
+  drag-resizable with persistence. The user's own value was not
+  overridden.
+- The Library icon and the Settings gear in the prototype were drawn from
+  **Lucide**, not Tabler (the designer mixed icon sets). We used Tabler:
+  `IconBookmarks` / `IconBookmarksFilled` for Library — unlike `IconBooks`,
+  it has a filled counterpart for the active state.
+- `IconBrandSafariFilled` (active Explore) doesn't exist in Tabler 3.46; we
+  use `IconCompassFilled`, which has added tick marks around the edge.
+- The Liked Songs cover picker from the prototype (4 presets + a custom
+  URL) wasn't ported as-is — we kept its default preset (originally
+  labelled "YTubic", now "Silicon Music") as the static `.liked-cover`.
 
-## Вкладка Playback: подключена к звуку
+## Playback tab: wired up to the audio
 
-Все строки вкладки читаются движком (`src/lib/audio-engine.ts`):
+Every row in the tab is read by the engine (`src/lib/audio-engine.ts`):
 
-- Эквалайзер, моно и нормализация: граф WebAudio в `src/lib/audio-graph.ts`
-  (`createMediaElementSource` -> 9 `BiquadFilter` -> моно-гейн ->
-  компрессор). Строится лениво при первом включении любой из них и
-  остаётся на сессию; пока всё выключено, играет голый `<audio>`.
-  Элементы грузят стрим с `crossOrigin="anonymous"`, CORS на роутере
-  axum уже стоял (`CorsLayer::permissive()`).
-- Кроссфейд: второй `<audio>`; следующий трек подгружается за 8 с до
-  начала перекрытия, дальше equal-power ramp через `volume` обоих
-  элементов. Стор переходит на следующий трек в момент старта фейда.
-- Устройство вывода: `setSinkId` на элементах, а после сборки графа на
-  `AudioContext`. Chromium называет устройства только после доступа к
-  микрофону, поэтому открытие списка один раз просит `getUserMedia` и
-  сразу отпускает поток. На Windows запрос для наших же страниц
-  разрешает Rust (`src-tauri/src/webview_permissions.rs`, обработчик
-  `PermissionRequested`), диалога WebView2 нет.
-- Кнопка «назад»: `prev()` в `store/playback.ts` читает `backButton` и
+- Equalizer, mono and normalization: a WebAudio graph in
+  `src/lib/audio-graph.ts` (`createMediaElementSource` -> nine
+  `BiquadFilter`s -> mono gain -> compressor). Built lazily the first time
+  any of them is turned on and kept for the session; while all of them are
+  off, a bare `<audio>` plays. The elements load the stream with
+  `crossOrigin="anonymous"`; CORS on the axum router was already in place
+  (`CorsLayer::permissive()`).
+- Crossfade: a second `<audio>`; the next track preloads 8s before the
+  overlap starts, then an equal-power ramp runs over both elements'
+  `volume`. The store advances to the next track the moment the fade
+  starts.
+- Output device: `setSinkId` on the elements, and on the `AudioContext`
+  once the graph is built. Chromium only names devices after microphone
+  access, so opening the list once requests `getUserMedia` and immediately
+  releases the stream. On Windows, Rust grants that request for our own
+  pages (`src-tauri/src/webview_permissions.rs`, the `PermissionRequested`
+  handler), so there's no WebView2 dialog.
+- Back button: `prev()` in `store/playback.ts` reads `backButton` and
   `smartBackSeconds`.
-- Resume: позиция в `partialize`, на rehydrate сохраняется при
-  включённом флаге, движок докручивает `currentTime` на `loadedmetadata`.
-- Главному окну и плавающему плееру добавлен
-  `--autoplay-policy=no-user-gesture-required`, иначе `AudioContext`,
-  созданный до первого клика (эквалайзер включён с прошлой сессии, старт
-  с медиаклавиши), остаётся suspended и молчит.
-- «Duck on short notifications» из вкладки убран: веб-API нет, а со
-  стороны Rust пришлось бы искать аудиосессию дочернего процесса WebView2
-  (IAudioSessionControl2 по PID). Если понадобится, это отдельная задача.
+- Resume: the position lives in `partialize`, is persisted on rehydrate
+  when the flag is on, and the engine fast-forwards `currentTime` on
+  `loadedmetadata`.
+- The main window and the floating player both got
+  `--autoplay-policy=no-user-gesture-required`, otherwise an `AudioContext`
+  created before the first click (equalizer left on from a previous
+  session, starting from a media key) stays suspended and silent.
+- "Duck on short notifications" was removed from the tab: there's no web
+  API for it, and doing it from Rust would mean finding the WebView2 child
+  process's audio session (`IAudioSessionControl2` by PID). A separate task
+  if it's ever needed.
 
-## Дальше по хендоффу
+## Further along the handoff
 
-- [ ] Switch / radio / segmented control и чипы пресетов.
-- [ ] Меню и попоуверы (стекло `glass3..6` + `backdrop-filter`).
-- [x] Экран настроек, What's New, About, тосты (sonner на `unstyled` +
-      classNames; позиция стека не менялась).
+- [ ] Switch / radio / segmented control and preset chips.
+- [ ] Menus and popovers (`glass3..6` glass + `backdrop-filter`).
+- [x] Settings screen, What's New, About, toasts (sonner on `unstyled` +
+      classNames; the stack position wasn't changed).

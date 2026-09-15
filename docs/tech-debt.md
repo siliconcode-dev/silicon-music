@@ -1,31 +1,32 @@
-# Технический долг
+# Tech debt
 
-Мелочи, замеченные по ходу другой работы и сознательно отложенные.
-Не фичи, поэтому живут отдельно от `feature-roadmap.md`.
+Small things noticed while doing other work and deliberately deferred.
+Not features, so they live separately from `feature-roadmap.md`.
 
-## Предупреждения eslint
+## ESLint warnings
 
-Три штуки, все предсуществующие. Сборка от них не падает.
+Three of them, all pre-existing. The build doesn't fail because of them.
 
-- [ ] `no-useless-assignment` в `src/components/ui/animated-tabs.tsx:54`.
-      `let newIndex = currentIndex` в обработчике клавиатуры: начальное
-      значение никогда не читается, каждая ветка либо перезаписывает
-      переменную, либо делает `return`. Поведение корректное, просто
-      мёртвый инициализатор. Компонент используется в панели очереди и
-      на странице Library.
+- [ ] `no-useless-assignment` in `src/components/ui/animated-tabs.tsx:54`.
+      `let newIndex = currentIndex` in the keyboard handler: the initial
+      value is never read, since every branch either overwrites the
+      variable or returns. The behavior is correct, it's just a dead
+      initializer. The component is used in the queue panel and on the
+      Library page.
 
-- [ ] `preserve-caught-error` ×2 в `src/lib/innertube/player.ts:77` и
-      `:84`, оба в `resolveStream`. Пойманная ошибка заворачивается в
-      новый `Error` через `String(e)`, так что текст доезжает, а стек и
-      оригинальный объект теряются. Нужно `new Error(msg, { cause: e })`.
-      Это пути отказа yt-dlp и невалидного JSON от него, то есть ровно
-      те случаи, где потерянная причина мешает разбирать проблемы с
-      воспроизведением.
+- [ ] `preserve-caught-error` ×2 in `src/lib/innertube/player.ts:77` and
+      `:84`, both in `resolveStream`. The caught error is wrapped into a
+      new `Error` via `String(e)`, so the text survives but the stack and
+      the original object are lost. Should be `new Error(msg, { cause: e })`.
+      These are yt-dlp's failure paths and invalid JSON from it, i.e.
+      exactly the cases where a lost cause makes playback issues harder to
+      debug.
 
-## Возможно мёртвый код
+## Possibly dead code
 
-- [ ] `resolveStream` из `src/lib/innertube/player.ts` не импортируется
-      ниоткуда (проверено грепом 2026-08-25). Движок ходит за потоком
-      другим путём, через `resolveStreamId` в `audio-engine.ts`. Похоже
-      на остаток прежней схемы. Проверить, живой ли модуль, прежде чем
-      чинить в нём `cause` выше: возможно, его надо просто удалить.
+- [ ] `resolveStream` from `src/lib/innertube/player.ts` isn't imported
+      from anywhere (checked via grep on 2026-08-25). The engine reaches
+      the stream a different way, through `resolveStreamId` in
+      `audio-engine.ts`. Looks like a leftover from an earlier scheme.
+      Check whether the module is actually live before fixing the `cause`
+      issue above in it — it may just need to be deleted.
