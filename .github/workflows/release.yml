@@ -1,7 +1,9 @@
-# Builds Windows (x64 and ARM64), then publishes a single draft GitHub
-# Release whenever a `v*` tag is pushed. Publish flow:
-#   git tag v0.1.0 && git push origin v0.1.0
-# → wait for this workflow → review the draft on the Releases page → publish.
+# Builds Windows (x64 and ARM64), assembles the NSIS installers, and
+# publishes them straight to a public GitHub Release whenever a `v*` tag
+# is pushed — no manual draft review step. Publish flow:
+#   git tag v0.6.1 && git push origin v0.6.1
+# → this workflow compiles both architectures and the release is live
+#   with both installers attached once it finishes.
 #
 # The TAURI_SIGNING_* secrets are for tauri-plugin-updater artifact
 # signatures (latest.json + .sig). Until the updater is wired up and the
@@ -63,7 +65,7 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: "Silicon Music ${{ github.ref_name }}"
           releaseBody: "See the assets below to download and install this version."
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
 
