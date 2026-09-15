@@ -47,7 +47,7 @@
       }
     },
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEZDRTQwOENGRDQ4RkNGOEYKUldTUHo0L1V6d2prL0pXbTVxMGljVmlBeHE0UUl5RGZCVEdWOGdsUGc3SDk1eWdEK0dIZmJVTHYK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDVFRkI3NjFBMTQ5RThGRjgKUldUNGo1NFVHbmI3WHN4c3RGanJCelhtb3o5V092UUw3RTJlQUw3cUtPc0hMSzFMbjY2N3ExZ04K",
       "endpoints": [
         "https://github.com/siliconcode-dev/silicon-music/releases/latest/download/latest.json"
       ],
